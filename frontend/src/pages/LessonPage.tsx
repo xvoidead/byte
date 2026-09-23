@@ -35,7 +35,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
       <article className="lesson-content">
         <div className="lesson-meta">
           <Link to="/">Курс</Link> · {lesson.module} · Урок {lesson.order}
-          {completed && <span className="badge-done">✓ пройден</span>}
+          {completed && <span className="badge-done">Пройден</span>}
         </div>
         <h1>{lesson.title}</h1>
         <a className="jump-to-task" href="#task">
@@ -70,7 +70,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
         <nav className="lesson-nav">
           {lesson.prev ? <Link to={`/lessons/${lesson.prev}`}>← Предыдущий урок</Link> : <span />}
           {lesson.next ? (
-            <Link to={`/lessons/${lesson.next}`} className={completed ? 'btn btn-run' : undefined}>
+            <Link to={`/lessons/${lesson.next}`} className={completed ? 'btn btn-primary btn-sm' : undefined}>
               Следующий урок →
             </Link>
           ) : (

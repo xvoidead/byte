@@ -49,7 +49,7 @@ export function RunOutput({
       {result.stdout && <pre className="stdout">{result.stdout}</pre>}
       {result.stderr && <pre className="stderr">{result.stderr}</pre>}
       {ok && !result.stdout && !result.stderr && <p className="console-placeholder">Программа ничего не вывела.</p>}
-      {hint && <p className="run-hint">💡 {hint}</p>}
+      {hint && <p className="run-hint">{hint}</p>}
     </div>
   );
 }

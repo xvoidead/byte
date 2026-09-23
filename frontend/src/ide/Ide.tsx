@@ -46,7 +46,7 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
           endLineNumber: d.line,
           startColumn: Math.max(1, d.column),
           endColumn: Math.max(d.column + 1, d.endColumn),
-          message: d.hint ? `${d.message}\n\n💡 ${d.hint}` : d.message,
+          message: d.hint ? `${d.message}\n\nПодсказка: ${d.hint}` : d.message,
         })),
     );
   }, []);
@@ -132,18 +132,22 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
   return (
     <div className="ide">
       <div className="ide-toolbar">
-        <button className="btn btn-run" onClick={run} disabled={busy !== null} title={`${mod} + Enter`}>
+        <button className="btn btn-primary btn-sm" onClick={run} disabled={busy !== null} title={`${mod} + Enter`}>
           {busy === 'run' ? <span className="spinner" /> : <PlayIcon />}
           Запустить
         </button>
         {lessonSlug && (
-          <button className="btn btn-check" onClick={check} disabled={busy !== null} title={`${mod} + Shift + Enter`}>
+          <button className="btn btn-secondary btn-sm btn-check" onClick={check} disabled={busy !== null} title={`${mod} + Shift + Enter`}>
             {busy === 'check' ? <span className="spinner" /> : <CheckIcon />}
             Проверить
           </button>
         )}
-        <span className="ide-hint">{mod} + Enter — запуск</span>
-        <button className="btn btn-ghost" onClick={reset} disabled={busy !== null} title="Вернуть исходный код">
+        <span className="ide-hint">
+          <kbd>{mod}</kbd>
+          <kbd>↵</kbd>
+          запуск
+        </span>
+        <button className="btn btn-ghost btn-sm" onClick={reset} disabled={busy !== null} title="Вернуть исходный код">
           <ResetIcon />
           <span className="hide-narrow">Сбросить</span>
         </button>
@@ -158,9 +162,10 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
           onMount={handleMount}
           loading={<div className="ide-loading">Загружаем редактор…</div>}
           options={{
-            fontSize: 14,
-            fontFamily: "'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, Consolas, monospace",
-            fontLigatures: true,
+            fontSize: 13.5,
+            fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace",
+            fontLigatures: false,
+            lineHeight: 22,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
@@ -185,7 +190,7 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
             {runResult && <StatusDot ok={runResult.status === 'SUCCESS'} />}
           </TabButton>
           <TabButton active={tab === 'input'} onClick={() => setTab('input')}>
-            Ввод{stdin.trim() && <span className="tab-badge">•</span>}
+            Ввод{stdin.trim() && <span className="tab-badge" />}
           </TabButton>
           {lessonSlug && (
             <TabButton active={tab === 'tests'} onClick={() => setTab('tests')}>

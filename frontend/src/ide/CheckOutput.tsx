@@ -24,7 +24,7 @@ export function CheckOutput({
   return (
     <div className="run-output">
       <div className={`run-status ${result.passed ? 'ok' : 'fail'}`}>
-        {result.passed ? '🎉 Все тесты пройдены! Задание выполнено.' : `Пройдено тестов: ${passed} из ${result.tests.length}`}
+        {result.passed ? 'Все тесты пройдены — задание выполнено' : `Пройдено тестов: ${passed} из ${result.tests.length}`}
       </div>
       <ul className="tests">
         {result.tests.map((test, i) => (
