@@ -5,9 +5,11 @@ import { Reveal } from '../components/motion';
 import { ShowcaseDemo } from '../components/ShowcaseDemo';
 import { useAsync } from '../components/useAsync';
 import { useProgress } from '../components/useProgress';
+import { useTitle } from '../components/useTitle';
 import type { LessonSummary } from '../types';
 
 export function HomePage() {
+  useTitle(null);
   const lessons = useAsync(api.lessons, []);
   const done = useProgress();
 
@@ -114,8 +116,12 @@ export function HomePage() {
       </section>
 
       <footer className="footer">
-        <span>byte</span>
-        <span className="muted">Код выполняется в изолированном процессе с ограничением по времени.</span>
+        <span>byte · учимся писать на Java</span>
+        <nav className="footer-links">
+          <Link to="/playground">Песочница</Link>
+          <Link to="/privacy">Конфиденциальность</Link>
+          <Link to="/terms">Правила</Link>
+        </nav>
       </footer>
     </main>
   );

@@ -16,12 +16,15 @@ public class CodeRunner {
 
     private final JavaCompilationService compiler;
     private final ProcessExecutionService executor;
+    private final SandboxHealth sandboxHealth;
     private final RunnerProperties properties;
     private final Semaphore slots;
 
-    public CodeRunner(JavaCompilationService compiler, ProcessExecutionService executor, RunnerProperties properties) {
+    public CodeRunner(JavaCompilationService compiler, ProcessExecutionService executor, SandboxHealth sandboxHealth,
+                      RunnerProperties properties) {
         this.compiler = compiler;
         this.executor = executor;
+        this.sandboxHealth = sandboxHealth;
         this.properties = properties;
         this.slots = new Semaphore(properties.maxConcurrentRuns(), true);
     }
@@ -60,6 +63,7 @@ public class CodeRunner {
     }
 
     private <T> T withSlot(Supplier<T> action) {
+        sandboxHealth.ensureVerified();
         boolean acquired;
         try {
             acquired = slots.tryAcquire(properties.queueTimeout().toMillis(), TimeUnit.MILLISECONDS);

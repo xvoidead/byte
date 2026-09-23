@@ -16,11 +16,13 @@ COPY --from=frontend /app/dist ./src/main/resources/static
 RUN mvn -q -DskipTests package
 
 # Запуск. Нужен именно JDK: сервер компилирует код встроенным javac.
+# Версия закреплена на 21: песочница использует SecurityManager, которого нет в Java 24+.
+# На более новой JVM сервер запустится, но откажется выполнять код учеников.
 FROM eclipse-temurin:21-jdk
 RUN useradd --system --uid 10001 --home-dir /app byte
 WORKDIR /app
 COPY --from=backend /app/target/byte.jar app.jar
 USER byte
-ENV JAVA_OPTS="-Xmx512m"
+ENV JAVA_OPTS="-Xmx512m -XX:+ExitOnOutOfMemoryError"
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

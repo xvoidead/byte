@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { useTitle } from '../components/useTitle';
 
 const Ide = lazy(() => import('../ide/Ide'));
 
@@ -19,6 +20,7 @@ public class Main {
 `;
 
 export function PlaygroundPage() {
+  useTitle('Песочница — byte');
   return (
     <main className="playground">
       <div className="playground-head">

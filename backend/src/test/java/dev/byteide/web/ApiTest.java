@@ -1,10 +1,12 @@
 package dev.byteide.web;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,8 +95,58 @@ class ApiTest {
     }
 
     @Test
-    void forwardsClientRoutesToSpa() throws Exception {
-        mvc.perform(get("/lessons/loops")).andExpect(forwardedUrl("/index.html"));
-        mvc.perform(get("/playground")).andExpect(forwardedUrl("/index.html"));
+    void servesPagesWithLessonMetaTags() throws Exception {
+        mvc.perform(get("/lessons/loops"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("<title>Циклы: for и while — урок")))
+                .andExpect(content().string(containsString("og:description")));
+        mvc.perform(get("/playground")).andExpect(status().isOk());
+        mvc.perform(get("/")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("<title>byte — Java в браузере</title>")));
+    }
+
+    @Test
+    void unknownPagesAre404HtmlAndUnknownApiIs404Json() throws Exception {
+        mvc.perform(get("/about"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("Страница не найдена")));
+        mvc.perform(get("/lessons/no-such-lesson")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/nope"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Не найдено"));
+    }
+
+    @Test
+    void addsSecurityHeaders() throws Exception {
+        mvc.perform(get("/api/lessons"))
+                .andExpect(header().string("Content-Security-Policy", containsString("default-src 'self'")))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("X-Frame-Options", "DENY"));
+    }
+
+    @Test
+    void servesRobotsAndSitemap() throws Exception {
+        mvc.perform(get("/robots.txt"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Sitemap: http://localhost/sitemap.xml")));
+        mvc.perform(get("/sitemap.xml"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<loc>http://localhost/lessons/hello-world</loc>")));
+    }
+
+    @Test
+    void reportsHealth() throws Exception {
+        mvc.perform(get("/api/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
+
+    @Test
+    void rejectsHugeRequests() throws Exception {
+        mvc.perform(post("/api/run").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\": \"" + "x".repeat(600_000) + "\"}"))
+                .andExpect(status().isPayloadTooLarge());
     }
 }

@@ -26,6 +26,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  site: () => request<{ contactEmail: string | null }>('/api/site'),
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (slug: string) => request<LessonDetails>(`/api/lessons/${encodeURIComponent(slug)}`),
   run: (code: string, stdin: string) =>

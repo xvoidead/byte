@@ -2,6 +2,8 @@ package dev.byteide.web;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,10 +17,13 @@ import dev.byteide.lessons.CheckResult;
 import dev.byteide.lessons.Lesson;
 import dev.byteide.lessons.LessonRepository;
 import dev.byteide.lessons.SolutionChecker;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/lessons")
 public class LessonController {
+
+    private static final Logger log = LoggerFactory.getLogger(LessonController.class);
 
     private final LessonRepository lessons;
     private final SolutionChecker checker;
@@ -53,9 +58,12 @@ public class LessonController {
     }
 
     @PostMapping("/{slug}/check")
-    public CheckResult check(@PathVariable String slug, @RequestBody CheckRequest request) {
+    public CheckResult check(@PathVariable String slug, @RequestBody CheckRequest request, HttpServletRequest http) {
         limits.checkSource(request.code());
-        return checker.check(find(slug), request.code());
+        CheckResult result = checker.check(find(slug), request.code());
+        log.info("check lesson={} passed={} compiled={} ip={}", slug, result.passed(), result.compiled(),
+                ClientIp.masked(ClientIp.of(http)));
+        return result;
     }
 
     private Lesson find(String slug) {

@@ -39,6 +39,12 @@ public class JavaCompilationService {
     private static final Pattern PUBLIC_TYPE = Pattern.compile(
             "(?m)^public\\s+(?:(?:final|abstract|sealed|non-sealed|strictfp)\\s+)*(?:class|interface|enum|record)\\s+([A-Za-z_$][\\w$]*)");
 
+    /** javac иногда сдаётся без сообщения — например, на очень глубокой вложенности скобок. */
+    static final Diagnostic UNREADABLE = new Diagnostic(Diagnostic.Severity.ERROR, 0, 0, 0,
+            "Компилятор не смог разобрать программу",
+            "Скорее всего, в коде слишком глубокая вложенность скобок или выражений. Упростите код.",
+            "byte.unreadable");
+
     private final JavaCompiler compiler;
     private final List<String> options;
 
@@ -68,7 +74,7 @@ public class JavaCompilationService {
                 fileManager.setLocation(StandardLocation.CLASS_OUTPUT, List.of(classesDir.toFile()));
                 JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, collector, options, null,
                         List.of(new StringSource(fileClassName, source)));
-                ok = task.call();
+                ok = callSafely(task);
             }
 
             List<Diagnostic> diagnostics = new ArrayList<>();
@@ -77,6 +83,9 @@ public class JavaCompilationService {
             }
 
             if (!ok) {
+                if (diagnostics.stream().noneMatch(d -> d.severity() == Diagnostic.Severity.ERROR)) {
+                    diagnostics.add(UNREADABLE);
+                }
                 return new CompilationResult(null, diagnostics, elapsedMs(start));
             }
 
@@ -84,7 +93,7 @@ public class JavaCompilationService {
             if (mainClass.isEmpty()) {
                 diagnostics.add(new Diagnostic(Diagnostic.Severity.ERROR, 0, 0, 0,
                         "Не найден метод public static void main(String[] args)",
-                        "Программа начинает выполнение с метода main. Добавьте его в класс Main."));
+                        "Программа начинает выполнение с метода main. Добавьте его в класс Main.", "byte.no.main"));
                 return new CompilationResult(null, diagnostics, elapsedMs(start));
             }
 
@@ -96,6 +105,20 @@ public class JavaCompilationService {
             if (!keepDir) {
                 new CompiledProgram(classesDir, "").close();
             }
+        }
+    }
+
+    /** На патологическом коде javac может переполнить стек — это ошибка кода ученика, а не сервера. */
+    private static boolean callSafely(JavaCompiler.CompilationTask task) {
+        try {
+            return task.call();
+        } catch (StackOverflowError | IllegalStateException e) {
+            return false;
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof StackOverflowError) {
+                return false;
+            }
+            throw e;
         }
     }
 
@@ -125,7 +148,7 @@ public class JavaCompilationService {
             endColumn = column + Math.max(1, Math.min(length, lineEnd - d.getPosition()));
         }
         return Optional.of(new Diagnostic(severity, line, column, endColumn,
-                d.getMessage(Locale.ROOT), CompilerHints.forCode(d.getCode())));
+                d.getMessage(Locale.ROOT), CompilerHints.forCode(d.getCode()), d.getCode()));
     }
 
     /**

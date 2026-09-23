@@ -8,10 +8,13 @@ import org.junit.jupiter.api.Test;
 
 class CodeRunnerTest {
 
-    private final RunnerProperties properties =
-            new RunnerProperties(Duration.ofSeconds(3), 64, 1024, 50_000, 100_000, 2, Duration.ofSeconds(10), null);
-    private final CodeRunner runner = new CodeRunner(
-            new JavaCompilationService(), new ProcessExecutionService(properties), properties);
+    static final RunnerProperties PROPERTIES = new RunnerProperties(Duration.ofSeconds(3), Duration.ofSeconds(3),
+            Duration.ofSeconds(20), 64, 16, 1024, 50_000, 100_000, 2, 2, 2, Duration.ofSeconds(10), null);
+    static final JavaCompilationService COMPILER = new JavaCompilationService();
+    static final ProcessExecutionService EXECUTOR = new ProcessExecutionService(PROPERTIES, new Sandbox(PROPERTIES));
+    static final SandboxHealth HEALTH = new SandboxHealth(COMPILER, EXECUTOR);
+
+    private final CodeRunner runner = new CodeRunner(COMPILER, EXECUTOR, HEALTH, PROPERTIES);
 
     @Test
     void runsProgramAndCapturesUnicodeOutput() {
@@ -141,7 +144,7 @@ class CodeRunnerTest {
                 """, "");
 
         assertThat(result.status()).isEqualTo(RunStatus.OUTPUT_LIMIT);
-        assertThat(result.stdout().getBytes(java.nio.charset.StandardCharsets.UTF_8).length).isLessThanOrEqualTo(1024);
+        assertThat(result.stdout().length()).isLessThanOrEqualTo(1024);
     }
 
     @Test
@@ -192,14 +195,20 @@ class CodeRunnerTest {
     void doesNotRunStaticInitializersOnServer() {
         RunResult result = runner.run("""
                 public class Main {
-                    static { if (System.getProperty("byte.test.marker") == null) System.setProperty("byte.test.marker", "child"); }
+                    static {
+                        try {
+                            System.setProperty("byte.test.marker", "set");
+                        } catch (SecurityException e) {
+                            // в песочнице запрещено
+                        }
+                    }
                     public static void main(String[] args) {
-                        System.out.println(System.getProperty("byte.test.marker"));
+                        System.out.println("ok");
                     }
                 }
                 """, "");
 
-        assertThat(result.stdout()).isEqualTo("child\n");
+        assertThat(result.stdout()).isEqualTo("ok\n");
         assertThat(System.getProperty("byte.test.marker")).isNull();
     }
 

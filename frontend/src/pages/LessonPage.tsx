@@ -4,6 +4,7 @@ import { api } from '../api';
 import { Markdown } from '../components/Markdown';
 import { useAsync } from '../components/useAsync';
 import { useProgress } from '../components/useProgress';
+import { useTitle } from '../components/useTitle';
 import { markCompleted } from '../storage';
 import type { LessonDetails } from '../types';
 
@@ -12,6 +13,7 @@ const Ide = lazy(() => import('../ide/Ide'));
 export function LessonPage() {
   const { slug = '' } = useParams();
   const lesson = useAsync(() => api.lesson(slug), [slug]);
+  useTitle(lesson.status === 'ready' ? `${lesson.data.title} — урок ${lesson.data.order} · byte` : null);
 
   if (lesson.status === 'loading') return <div className="page-state">Загружаем урок…</div>;
   if (lesson.status === 'error') {

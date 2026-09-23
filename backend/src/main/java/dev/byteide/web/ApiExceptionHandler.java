@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import dev.byteide.runner.RunnerBusyException;
+import dev.byteide.runner.SandboxUnavailableException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -27,6 +28,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(RunnerBusyException.class)
     ResponseEntity<Map<String, String>> busy(RunnerBusyException e) {
         return error(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
+    }
+
+    @ExceptionHandler(SandboxUnavailableException.class)
+    ResponseEntity<Map<String, String>> sandbox(SandboxUnavailableException e) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "Сервер временно не может запускать программы. Попробуйте позже.");
     }
 
     @ExceptionHandler(ResponseStatusException.class)

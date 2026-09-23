@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Mascot } from './Mascot';
 
 export function Logo() {
@@ -13,6 +14,7 @@ export function Logo() {
 }
 
 export function Layout() {
+  const location = useLocation();
   return (
     <div className="app">
       <header className="header">
@@ -29,7 +31,9 @@ export function Layout() {
           </Link>
         </div>
       </header>
-      <Outlet />
+      <ErrorBoundary key={location.pathname}>
+        <Outlet />
+      </ErrorBoundary>
     </div>
   );
 }
