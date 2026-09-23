@@ -1,0 +1,11 @@
+{
+  "module": "Управление ходом программы",
+  "title": "Циклы: for и while",
+  "summary": "Повторяем действия, не копируя код.",
+  "tests": [
+    { "name": "n = 5", "stdin": "5\n", "expectedOutput": "1\n2\nFizz\n4\nBuzz\n", "hidden": false },
+    { "name": "n = 15", "stdin": "15\n", "expectedOutput": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n", "hidden": false },
+    { "name": "n = 1", "stdin": "1\n", "expectedOutput": "1\n", "hidden": true },
+    { "name": "n = 31", "stdin": "31\n", "expectedOutput": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n16\n17\nFizz\n19\nBuzz\nFizz\n22\n23\nFizz\nBuzz\n26\nFizz\n28\n29\nFizzBuzz\n31\n", "hidden": true }
+  ]
+}

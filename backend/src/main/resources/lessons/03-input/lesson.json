@@ -1,0 +1,10 @@
+{
+  "module": "Первые шаги",
+  "title": "Ввод с клавиатуры",
+  "summary": "Читаем данные пользователя с помощью Scanner.",
+  "tests": [
+    { "name": "2 и 3", "stdin": "2 3\n", "expectedOutput": "Сумма: 5\nПроизведение: 6\n", "hidden": false },
+    { "name": "Отрицательные числа", "stdin": "-10 4\n", "expectedOutput": "Сумма: -6\nПроизведение: -40\n", "hidden": false },
+    { "name": "Большие числа", "stdin": "100000\n300000\n", "expectedOutput": "Сумма: 400000\nПроизведение: 30000000000\n", "hidden": true }
+  ]
+}

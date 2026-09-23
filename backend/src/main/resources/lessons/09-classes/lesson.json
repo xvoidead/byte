@@ -1,0 +1,11 @@
+{
+  "module": "Объекты и коллекции",
+  "title": "Классы и объекты",
+  "summary": "Основа объектно-ориентированного программирования.",
+  "tests": [
+    { "name": "Пополнение и снятие", "stdin": "deposit 100\nwithdraw 30\nbalance\n", "expectedOutput": "Баланс: 70\n", "hidden": false },
+    { "name": "Недостаточно средств", "stdin": "deposit 50\nwithdraw 80\nbalance\n", "expectedOutput": "Недостаточно средств\nБаланс: 50\n", "hidden": false },
+    { "name": "Некорректная сумма", "stdin": "deposit -5\ndeposit 0\nwithdraw -1\nbalance\n", "expectedOutput": "Сумма должна быть положительной\nСумма должна быть положительной\nСумма должна быть положительной\nБаланс: 0\n", "hidden": true },
+    { "name": "Много операций", "stdin": "deposit 1000\nwithdraw 1\nbalance\nwithdraw 999\nbalance\nwithdraw 1\ndeposit 7\nbalance\n", "expectedOutput": "Баланс: 999\nБаланс: 0\nНедостаточно средств\nБаланс: 7\n", "hidden": true }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "module": "Массивы, строки и методы",
+  "title": "Строки",
+  "summary": "Работа с текстом: методы String и StringBuilder.",
+  "tests": [
+    {
+      "name": "Шалаш",
+      "stdin": "шалаш\n",
+      "expectedOutput": "Длина: 5\nНаоборот: шалаш\nПалиндром: да\n",
+      "hidden": false
+    },
+    {
+      "name": "Java",
+      "stdin": "Java\n",
+      "expectedOutput": "Длина: 4\nНаоборот: avaJ\nПалиндром: нет\n",
+      "hidden": false
+    },
+    {
+      "name": "Разный регистр",
+      "stdin": "Казак\n",
+      "expectedOutput": "Длина: 5\nНаоборот: казаК\nПалиндром: да\n",
+      "hidden": true
+    },
+    {
+      "name": "Фраза с пробелами",
+      "stdin": "А роза упала на лапу Азора\n",
+      "expectedOutput": "Длина: 26\nНаоборот: арозА упал ан алапу азор А\nПалиндром: да\n",
+      "hidden": true
+    },
+    {
+      "name": "Один символ",
+      "stdin": "x\n",
+      "expectedOutput": "Длина: 1\nНаоборот: x\nПалиндром: да\n",
+      "hidden": true
+    }
+  ]
+}

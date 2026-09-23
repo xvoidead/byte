@@ -1,0 +1,31 @@
+{
+  "module": "Объекты и коллекции",
+  "title": "Коллекции: ArrayList и HashMap",
+  "summary": "Списки переменной длины и словари «ключ → значение».",
+  "tests": [
+    {
+      "name": "Простой текст",
+      "stdin": "to be or not to be\n",
+      "expectedOutput": "be: 2\nnot: 1\nor: 1\nto: 2\nУникальных слов: 4\n",
+      "hidden": false
+    },
+    {
+      "name": "Регистр не важен",
+      "stdin": "Кот кот КОТ пёс\n",
+      "expectedOutput": "кот: 3\nпёс: 1\nУникальных слов: 2\n",
+      "hidden": false
+    },
+    {
+      "name": "Несколько строк",
+      "stdin": "java code\nJava  runs   everywhere\ncode code\n",
+      "expectedOutput": "code: 3\neverywhere: 1\njava: 2\nruns: 1\nУникальных слов: 4\n",
+      "hidden": true
+    },
+    {
+      "name": "Одно слово",
+      "stdin": "привет\n",
+      "expectedOutput": "привет: 1\nУникальных слов: 1\n",
+      "hidden": true
+    }
+  ]
+}
