@@ -1,20 +1,11 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { highlightJava } from '../components/highlightJava';
+import { Reveal } from '../components/motion';
+import { ShowcaseDemo } from '../components/ShowcaseDemo';
 import { useAsync } from '../components/useAsync';
 import { useProgress } from '../components/useProgress';
 import type { LessonSummary } from '../types';
-
-const SHOWCASE_CODE = `import java.util.Scanner;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner in = new Scanner(System.in);
-        String name = in.nextLine();
-        System.out.println("Привет, " + name + "!");
-    }
-}`;
 
 export function HomePage() {
   const lessons = useAsync(api.lessons, []);
@@ -28,19 +19,22 @@ export function HomePage() {
     <main className="home">
       <section className="hero">
         <div className="hero-glow" aria-hidden="true" />
-        <span className="pill">
+        <span className="pill intro" style={delay(0)}>
           <span className="pill-dot" />
           Java 21 · без установки
         </span>
         <h1 className="hero-title">
-          Изучайте Java.
-          <br />
-          <span className="gradient-accent">Прямо в браузере.</span>
+          <span className="hero-line" style={delay(120)}>
+            Изучайте Java.
+          </span>
+          <span className="hero-line gradient-accent" style={delay(300)}>
+            Прямо в браузере.
+          </span>
         </h1>
-        <p className="hero-lead">
+        <p className="hero-lead intro" style={delay(520)}>
           Короткие уроки, настоящий компилятор и задания с мгновенной проверкой. Откройте урок — и пишите код.
         </p>
-        <div className="hero-actions">
+        <div className="hero-actions intro" style={delay(660)}>
           <Link className="btn btn-primary btn-lg" to={nextLesson ? `/lessons/${nextLesson.slug}` : '/lessons/hello-world'}>
             {completed === 0 ? 'Начать обучение' : 'Продолжить обучение'}
             <ArrowIcon />
@@ -51,65 +45,24 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="showcase" aria-label="Пример работы редактора">
-        <img className="showcase-mascot" src="/mascot.svg" alt="" />
-        <div className="window">
-          <div className="window-bar">
-            <span className="window-dots">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span className="window-tab">Main.java</span>
-            <span className="window-run">
-              <PlayIcon /> Запустить
-            </span>
-          </div>
-          <div className="window-body">
-            <pre className="window-code">
-              {SHOWCASE_CODE.split('\n').map((line, i) => (
-                <div key={i} className="code-line">
-                  <span className="code-ln">{i + 1}</span>
-                  <code>
-                    {highlightJava(line).map((t, j) =>
-                      t.kind ? (
-                        <span key={j} className={`tok-${t.kind}`}>
-                          {t.text}
-                        </span>
-                      ) : (
-                        t.text
-                      ),
-                    )}
-                  </code>
-                </div>
-              ))}
-            </pre>
-            <div className="window-console">
-              <div className="window-console-head">Консоль</div>
-              <div className="window-console-line muted">&gt; Ада</div>
-              <div className="window-console-line">Привет, Ада!</div>
-              <div className="window-console-ok">
-                <CheckIcon /> Все тесты пройдены · 3 из 3
-              </div>
-            </div>
-          </div>
-        </div>
+      <section className="showcase intro" style={delay(820)} aria-label="Пример работы редактора">
+        <ShowcaseDemo />
       </section>
 
       <section className="features">
-        <Feature icon={<ChipIcon />} title="Настоящая Java">
+        <Feature delay={0} icon={<ChipIcon />} title="Настоящая Java">
           Код компилируется javac и выполняется на JVM — так же, как на вашем компьютере.
         </Feature>
-        <Feature icon={<CursorIcon />} title="Редактор уровня IDE">
+        <Feature delay={90} icon={<CursorIcon />} title="Редактор уровня IDE">
           Подсветка, автодополнение с import, сниппеты sout и psvm, ошибки прямо в коде.
         </Feature>
-        <Feature icon={<ShieldIcon />} title="Мгновенная проверка">
+        <Feature delay={180} icon={<ShieldIcon />} title="Мгновенная проверка">
           Каждое задание проверяется тестами, а ошибки компилятора объясняются по-русски.
         </Feature>
       </section>
 
       <section className="program">
-        <div className="section-head">
+        <Reveal className="section-head">
           <div>
             <h2 className="section-title">Программа курса</h2>
             <p className="section-lead">От первой строки кода до классов и коллекций.</p>
@@ -124,20 +77,25 @@ export function HomePage() {
               </div>
             </div>
           )}
-        </div>
+        </Reveal>
 
         {lessons.status === 'loading' && <p className="muted">Загружаем уроки…</p>}
         {lessons.status === 'error' && <p className="error-text">{lessons.error}</p>}
 
         <div className="modules">
           {groupByModule(list).map(([module, items]) => (
-            <div key={module} className="module">
+            <Reveal key={module} className="module">
               <h3 className="module-title">{module}</h3>
               <div className="module-list">
-                {items.map((lesson) => {
+                {items.map((lesson, index) => {
                   const isDone = done.has(lesson.slug);
                   return (
-                    <Link key={lesson.slug} to={`/lessons/${lesson.slug}`} className="lesson-row">
+                    <Link
+                      key={lesson.slug}
+                      to={`/lessons/${lesson.slug}`}
+                      className="lesson-row"
+                      style={{ '--i': index } as CSSProperties}
+                    >
                       <span className="lesson-row-num">{String(lesson.order).padStart(2, '0')}</span>
                       <span className="lesson-row-text">
                         <span className="lesson-row-title">{lesson.title}</span>
@@ -150,7 +108,7 @@ export function HomePage() {
                   );
                 })}
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -163,14 +121,18 @@ export function HomePage() {
   );
 }
 
-function Feature({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+function Feature({ icon, title, delay, children }: { icon: ReactNode; title: string; delay: number; children: ReactNode }) {
   return (
-    <div className="feature">
+    <Reveal className="feature" delay={delay}>
       <div className="feature-icon">{icon}</div>
       <h3>{title}</h3>
       <p>{children}</p>
-    </div>
+    </Reveal>
   );
+}
+
+function delay(ms: number): CSSProperties {
+  return { '--intro-delay': `${ms}ms` } as CSSProperties;
 }
 
 function groupByModule(lessons: LessonSummary[]): [string, LessonSummary[]][] {
@@ -206,15 +168,7 @@ function ArrowIcon() {
 function CheckIcon() {
   return (
     <svg {...iconProps} width={16} height={16}>
-      <path d="M5 12.5l4.5 4.5L19 7.5" />
-    </svg>
-  );
-}
-
-function PlayIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 2.5v11l9-5.5z" fill="currentColor" />
+      <path className="check-draw" d="M5 12.5l4.5 4.5L19 7.5" />
     </svg>
   );
 }

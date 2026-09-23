@@ -6,6 +6,7 @@ import { loadCode, loadStdin, saveCode, saveStdin } from '../storage';
 import type { CheckResult, Diagnostic, RunResult } from '../types';
 import { RunOutput } from './RunOutput';
 import { CheckOutput } from './CheckOutput';
+import { Mascot, type MascotMood } from '../components/Mascot';
 
 type Tab = 'console' | 'input' | 'tests';
 type Busy = 'run' | 'check' | null;
@@ -30,7 +31,10 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reaction, setReaction] = useState<{ mood: MascotMood; key: number }>({ mood: 'idle', key: 0 });
   const editorRef = useRef<MonacoEditor | null>(null);
+
+  const setMood = useCallback((mood: MascotMood) => setReaction((r) => ({ mood, key: r.key + 1 })), []);
 
   const showDiagnostics = useCallback((diagnostics: Diagnostic[]) => {
     const model = editorRef.current?.getModel();
@@ -60,12 +64,13 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
       const result = await api.run(code, stdin);
       setRunResult(result);
       showDiagnostics(result.diagnostics);
+      setMood(result.status === 'SUCCESS' ? 'idle' : 'sad');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Не удалось выполнить программу.');
     } finally {
       setBusy(null);
     }
-  }, [busy, code, stdin, showDiagnostics]);
+  }, [busy, code, stdin, showDiagnostics, setMood]);
 
   const check = useCallback(async () => {
     if (busy || !lessonSlug) return;
@@ -76,13 +81,14 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
       const result = await api.check(lessonSlug, code);
       setCheckResult(result);
       showDiagnostics(result.diagnostics);
+      setMood(result.passed ? 'happy' : 'sad');
       if (result.passed) onPassed?.();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Не удалось проверить решение.');
     } finally {
       setBusy(null);
     }
-  }, [busy, code, lessonSlug, onPassed, showDiagnostics]);
+  }, [busy, code, lessonSlug, onPassed, showDiagnostics, setMood]);
 
   // Горячие клавиши регистрируются один раз, поэтому вызываем актуальные обработчики через ref.
   const actions = useRef({ run, check });
@@ -198,12 +204,13 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
               {checkResult && <StatusDot ok={checkResult.passed} />}
             </TabButton>
           )}
+          <Mascot className="ide-mascot" mood={reaction.mood} reactKey={reaction.key} />
         </div>
         <div className="console-body">
           {error && <div className="console-error">{error}</div>}
           {tab === 'console' &&
             (runResult ? (
-              <RunOutput result={runResult} onDiagnosticClick={goTo} />
+              <RunOutput key={reaction.key} result={runResult} onDiagnosticClick={goTo} />
             ) : (
               <p className="console-placeholder">
                 Нажмите «Запустить», чтобы скомпилировать и выполнить программу. Результат появится здесь.
@@ -227,7 +234,7 @@ export default function Ide({ storageKey, initialCode, initialStdin = '', lesson
           {tab === 'tests' &&
             lessonSlug &&
             (checkResult ? (
-              <CheckOutput result={checkResult} onDiagnosticClick={goTo} />
+              <CheckOutput key={reaction.key} result={checkResult} onDiagnosticClick={goTo} />
             ) : (
               <p className="console-placeholder">
                 Нажмите «Проверить», чтобы запустить программу на тестах задания.

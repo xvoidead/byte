@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { CheckResult, TestOutcome } from '../types';
 import { DiagnosticList, statusText } from './RunOutput';
 
@@ -37,7 +38,7 @@ export function CheckOutput({
 
 function TestItem({ test, index }: { test: TestOutcome; index: number }) {
   return (
-    <li className={`test ${test.passed ? 'ok' : 'fail'}`}>
+    <li className={`test ${test.passed ? 'ok' : 'fail'}`} style={{ '--i': index - 1 } as CSSProperties}>
       <div className="test-head">
         <span className="test-icon">{test.passed ? '✓' : '✗'}</span>
         <span>

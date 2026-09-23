@@ -1,9 +1,10 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Mascot } from './Mascot';
 
 export function Logo() {
   return (
     <Link to="/" className="logo" aria-label="byte — на главную">
-      <img className="logo-img" src="/mascot.svg" alt="" />
+      <Mascot className="logo-img" />
       <span className="wordmark">
         byte<span className="wordmark-cursor" aria-hidden="true" />
       </span>
