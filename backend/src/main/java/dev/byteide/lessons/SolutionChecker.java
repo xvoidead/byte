@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import dev.byteide.runner.CodeRunner;
+import dev.byteide.runner.Diagnostic;
 import dev.byteide.runner.RunResult;
 import dev.byteide.runner.RunStatus;
 
@@ -28,7 +29,7 @@ public class SolutionChecker {
                         outcomes.add(outcome(tests.get(i), results.get(i)));
                     }
                     boolean passed = outcomes.stream().allMatch(CheckResult.TestOutcome::passed);
-                    var diagnostics = results.isEmpty() ? List.<dev.byteide.runner.Diagnostic>of() : results.getFirst().diagnostics();
+                    List<Diagnostic> diagnostics = results.isEmpty() ? List.of() : results.getFirst().diagnostics();
                     return new CheckResult(passed, true, diagnostics, outcomes);
                 });
     }

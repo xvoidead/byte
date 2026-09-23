@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.springframework.stereotype.Service;
 
@@ -58,7 +59,7 @@ public class CodeRunner {
         });
     }
 
-    private <T> T withSlot(java.util.function.Supplier<T> action) {
+    private <T> T withSlot(Supplier<T> action) {
         boolean acquired;
         try {
             acquired = slots.tryAcquire(properties.queueTimeout().toMillis(), TimeUnit.MILLISECONDS);
