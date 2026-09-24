@@ -28,14 +28,6 @@ export function saveCode(key: string, code: string | null): void {
   write(`code:${key}`, code);
 }
 
-export function loadStdin(key: string): string {
-  return read(`stdin:${key}`) ?? '';
-}
-
-export function saveStdin(key: string, stdin: string): void {
-  write(`stdin:${key}`, stdin || null);
-}
-
 const COMPLETED = 'completed';
 const listeners = new Set<() => void>();
 

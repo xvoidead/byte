@@ -1,4 +1,4 @@
-export type RunStatus = 'SUCCESS' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIMEOUT' | 'OUTPUT_LIMIT';
+export type RunStatus = 'SUCCESS' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIMEOUT' | 'OUTPUT_LIMIT' | 'STOPPED';
 
 export interface Diagnostic {
   severity: 'ERROR' | 'WARNING';
@@ -7,6 +7,7 @@ export interface Diagnostic {
   endColumn: number;
   message: string;
   hint: string | null;
+  code: string | null;
 }
 
 export interface RunResult {

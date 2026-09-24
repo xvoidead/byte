@@ -144,6 +144,21 @@ class ApiTest {
     }
 
     @Test
+    void diagnosesCodeWithoutRunningIt() throws Exception {
+        mvc.perform(post("/api/compile").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"code": "public class Main { public static void main(String[] a) { int x = 5 } }"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diagnostics[0].severity").value("ERROR"))
+                .andExpect(jsonPath("$.diagnostics[0].code").value("compiler.err.expected"))
+                .andExpect(jsonPath("$.diagnostics[0].hint").exists());
+        mvc.perform(post("/api/compile").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"code": "public class Main { static int f() { } }"}
+                        """))
+                .andExpect(jsonPath("$.diagnostics[0].code").value("compiler.err.missing.ret.stmt"));
+    }
+
+    @Test
     void rejectsHugeRequests() throws Exception {
         mvc.perform(post("/api/run").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"" + "x".repeat(600_000) + "\"}"))

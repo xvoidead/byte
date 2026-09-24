@@ -1,15 +1,17 @@
-import type { CheckResult, LessonDetails, LessonSummary, RunResult } from './types';
+import type { CheckResult, Diagnostic, LessonDetails, LessonSummary, RunResult } from './types';
 
 export class ApiError extends Error {}
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  if (init?.signal?.aborted) throw new DOMException('aborted', 'AbortError');
   let response: Response;
   try {
     response = await fetch(url, {
       ...init,
       headers: { 'Content-Type': 'application/json', ...init?.headers },
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw e;
     throw new ApiError('Нет связи с сервером. Проверьте подключение к интернету.');
   }
   if (!response.ok) {
@@ -29,6 +31,12 @@ export const api = {
   site: () => request<{ contactEmail: string | null }>('/api/site'),
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (slug: string) => request<LessonDetails>(`/api/lessons/${encodeURIComponent(slug)}`),
+  compile: (code: string, signal?: AbortSignal) =>
+    request<{ diagnostics: Diagnostic[]; timeMs: number }>('/api/compile', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+      signal,
+    }),
   run: (code: string, stdin: string) =>
     request<RunResult>('/api/run', { method: 'POST', body: JSON.stringify({ code, stdin }) }),
   check: (slug: string, code: string) =>

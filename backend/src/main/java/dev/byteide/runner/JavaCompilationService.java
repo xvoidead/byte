@@ -26,6 +26,8 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+import com.sun.source.util.JavacTask;
+
 import org.springframework.stereotype.Service;
 
 /**
@@ -105,6 +107,52 @@ public class JavaCompilationService {
             if (!keepDir) {
                 new CompiledProgram(classesDir, "").close();
             }
+        }
+    }
+
+    /**
+     * Проверка кода на ошибки без генерации классов и без запуска — для подсветки ошибок во время набора.
+     * javac разбирает код, проверяет типы и поток выполнения, но ничего не пишет на диск.
+     */
+    public DiagnosticsResult diagnose(String source) {
+        long start = System.nanoTime();
+        String fileClassName = publicTypeName(source).orElse(DEFAULT_CLASS_NAME);
+        DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
+        boolean ok;
+        try (StandardJavaFileManager fileManager =
+                     compiler.getStandardFileManager(collector, Locale.ROOT, StandardCharsets.UTF_8)) {
+            JavacTask task = (JavacTask) compiler.getTask(null, fileManager, collector, options, null,
+                    List.of(new StringSource(fileClassName, source)));
+            ok = analyzeSafely(task);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        for (var d : collector.getDiagnostics()) {
+            toDiagnostic(d, source).ifPresent(diagnostics::add);
+        }
+        if (!ok && diagnostics.stream().noneMatch(d -> d.severity() == Diagnostic.Severity.ERROR)) {
+            diagnostics.add(UNREADABLE);
+        }
+        return new DiagnosticsResult(diagnostics, elapsedMs(start));
+    }
+
+    public record DiagnosticsResult(List<Diagnostic> diagnostics, long timeMs) {
+    }
+
+    private static boolean analyzeSafely(JavacTask task) {
+        try {
+            task.analyze();
+            return true;
+        } catch (StackOverflowError | IllegalStateException e) {
+            return false;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof StackOverflowError) {
+                return false;
+            }
+            throw e;
         }
     }
 

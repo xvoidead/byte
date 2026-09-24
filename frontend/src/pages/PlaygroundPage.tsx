@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         System.out.println("Как тебя зовут?");
-        String name = in.hasNextLine() ? in.nextLine() : "незнакомец";
+        String name = in.nextLine();
         System.out.println("Привет, " + name + "!");
 
         for (int i = 1; i <= 5; i++) {
@@ -32,7 +32,7 @@ export function PlaygroundPage() {
       </div>
       <div className="playground-ide">
         <Suspense fallback={<div className="ide-loading">Загружаем редактор…</div>}>
-          <Ide storageKey="playground" initialCode={SAMPLE} initialStdin="Ада" />
+          <Ide storageKey="playground" initialCode={SAMPLE} />
         </Suspense>
       </div>
     </main>

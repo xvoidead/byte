@@ -86,7 +86,6 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
           <Ide
             storageKey={`lesson:${lesson.slug}`}
             initialCode={lesson.starterCode}
-            initialStdin={lesson.examples[0]?.stdin ?? ''}
             lessonSlug={lesson.slug}
             onPassed={onPassed}
           />

@@ -1,4 +1,5 @@
 import type * as Monaco from 'monaco-editor';
+import { receiverBefore, resolveReceiver, signature, type Member } from './javaMembers';
 
 interface Snippet {
   label: string;
@@ -67,11 +68,39 @@ export function registerJavaCompletions(monaco: typeof Monaco): void {
   registered = true;
 
   monaco.languages.registerCompletionItemProvider('java', {
+    triggerCharacters: ['.'],
     provideCompletionItems(model, position) {
       const word = model.getWordUntilPosition(position);
       const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
       const { CompletionItemKind, CompletionItemInsertTextRule } = monaco.languages;
       const source = model.getValue();
+
+      // После точки — только методы и поля объекта слева от неё.
+      const line = model.getLineContent(position.lineNumber);
+      const dotIndex = word.startColumn - 2;
+      if (dotIndex >= 0 && line[dotIndex] === '.') {
+        const before = model.getValueInRange(
+          new monaco.Range(1, 1, position.lineNumber, word.startColumn),
+        );
+        const resolved = resolveReceiver(before, receiverBefore(line, dotIndex));
+        if (!resolved) return { suggestions: [] };
+        const seen = new Set<string>();
+        const suggestions: Monaco.languages.CompletionItem[] = [];
+        for (const member of resolved.members) {
+          const isField = member.params === null;
+          suggestions.push({
+            label: { label: member.name, detail: isField ? '' : `(${member.params})`, description: member.returns },
+            kind: isField ? CompletionItemKind.Field : CompletionItemKind.Method,
+            insertText: isField ? member.name : member.params ? `${member.name}($0)` : `${member.name}()`,
+            insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: { value: memberDoc(member, resolved.typeName) },
+            range,
+            sortText: (seen.has(member.name) ? '1' : '0') + member.name,
+          });
+          seen.add(member.name);
+        }
+        return { suggestions };
+      }
 
       const suggestions: Monaco.languages.CompletionItem[] = [
         ...SNIPPETS.map((s) => ({
@@ -108,6 +137,31 @@ export function registerJavaCompletions(monaco: typeof Monaco): void {
       return { suggestions };
     },
   });
+
+  // Подсказка при наведении на метод или поле: описание на русском.
+  monaco.languages.registerHoverProvider('java', {
+    provideHover(model, position) {
+      const word = model.getWordAtPosition(position);
+      if (!word) return null;
+      const line = model.getLineContent(position.lineNumber);
+      const dotIndex = word.startColumn - 2;
+      if (dotIndex < 0 || line[dotIndex] !== '.') return null;
+      const before = model.getValueInRange(new monaco.Range(1, 1, position.lineNumber, word.startColumn));
+      const resolved = resolveReceiver(before, receiverBefore(line, dotIndex));
+      const after = line.slice(word.endColumn - 1).trimStart();
+      const isCall = after.startsWith('(');
+      const member = resolved?.members.find((x) => x.name === word.word && (x.params !== null) === isCall);
+      if (!member || !resolved) return null;
+      return {
+        range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+        contents: [{ value: memberDoc(member, resolved.typeName) }],
+      };
+    },
+  });
+}
+
+function memberDoc(member: Member, typeName: string): string {
+  return ['```java', signature(member), '```', member.doc, typeName ? `\n_${typeName}_` : ''].join('\n');
 }
 
 function hasImport(source: string, pkg: string, name: string): boolean {
