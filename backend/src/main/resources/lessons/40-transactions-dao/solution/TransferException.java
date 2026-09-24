@@ -1,0 +1,6 @@
+/** Перевод невозможен. Сообщение показывается игроку. */
+public class TransferException extends Exception {
+    public TransferException(String message) {
+        super(message);
+    }
+}

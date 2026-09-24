@@ -1,0 +1,54 @@
+{
+  "module": "Базы данных",
+  "title": "PreparedStatement и SQL-инъекции",
+  "summary": "Почему нельзя склеивать SQL из строк и как параметры защищают базу.",
+  "tests": [
+    {
+      "name": "Обычные товары",
+      "stdin": "add 150 Меч\nadd 90 Щит\nadd 60 Лук\nprice Щит\ncheaper 100\nremove Лук\nremove Лук\ncount\n",
+      "expectedOutput": "Добавлен: Меч (150)\nДобавлен: Щит (90)\nДобавлен: Лук (60)\nЩит: 90\nЛук — 60\nЩит — 90\nУдалён: Лук\nНе найден: Лук\nТоваров: 2\n",
+      "hidden": false
+    },
+    {
+      "name": "Апостроф в названии",
+      "stdin": "add 300 Шпага Д'Артаньяна\nprice Шпага Д'Артаньяна\ncount\n",
+      "expectedOutput": "Добавлен: Шпага Д'Артаньяна (300)\nШпага Д'Артаньяна: 300\nТоваров: 1\n",
+      "hidden": false
+    },
+    {
+      "name": "Попытка инъекции в поиске",
+      "stdin": "add 10 Хлеб\nadd 20 Сыр\nprice ' OR '1'='1\nprice Хлеб' --\n",
+      "expectedOutput": "Добавлен: Хлеб (10)\nДобавлен: Сыр (20)\nНе найден: ' OR '1'='1\nНе найден: Хлеб' --\n",
+      "hidden": true
+    },
+    {
+      "name": "Попытка удалить весь склад",
+      "stdin": "add 5 Яблоко\nadd 7 Груша\nremove x' OR '1'='1\ncount\nremove Груша\ncount\n",
+      "expectedOutput": "Добавлен: Яблоко (5)\nДобавлен: Груша (7)\nНе найден: x' OR '1'='1\nТоваров: 2\nУдалён: Груша\nТоваров: 1\n",
+      "hidden": true
+    },
+    {
+      "name": "Дубликаты и пустой склад",
+      "stdin": "count\ncheaper 1000\nadd 50 Факел\nadd 70 Факел\nprice Факел\nadd 1 \"Кавычки\" и 'апострофы'\ncheaper 50\n",
+      "expectedOutput": "Товаров: 0\nНичего не найдено\nДобавлен: Факел (50)\nУже есть: Факел\nФакел: 50\nДобавлен: \"Кавычки\" и 'апострофы' (1)\n\"Кавычки\" и 'апострофы' — 1\nФакел — 50\n",
+      "hidden": true
+    },
+    {
+      "name": "Равные цены",
+      "stdin": "add 30 Борщ\nadd 30 Акула\nadd 30 Вишня\nadd 31 Арбуз\ncheaper 30\n",
+      "expectedOutput": "Добавлен: Борщ (30)\nДобавлен: Акула (30)\nДобавлен: Вишня (30)\nДобавлен: Арбуз (31)\nАкула — 30\nБорщ — 30\nВишня — 30\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Каждый запрос переделывается одинаково: значение в тексте заменяется на `?`, а потом передаётся через `setString` или `setInt`. Кавычки вокруг `?` ставить не нужно.",
+    "`db.prepareStatement(\"SELECT price FROM items WHERE name = ?\")`, затем `find.setString(1, name)` и `find.executeQuery()` — без аргументов.",
+    "Для `add` удобен `INSERT OR IGNORE INTO items (name, price) VALUES (?, ?)`: если товар уже есть, `executeUpdate()` вернёт 0.",
+    "Не забудьте и `cheaper`: число тоже передаётся параметром через `setInt`, склеивать запрос нельзя ни с чем."
+  ],
+  "requirements": [
+    { "type": "call", "name": "prepareStatement", "message": "Используйте PreparedStatement для запросов с данными." },
+    { "type": "call", "name": "setString", "message": "Передавайте название товара параметром через setString." },
+    { "type": "call", "name": "setInt", "message": "Передавайте цену параметром через setInt." }
+  ]
+}

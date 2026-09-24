@@ -5,7 +5,7 @@ test('главная показывает весь курс', async ({ page, bas
   const problems = watchProblems(page, baseURL);
   await page.goto('/');
   await expect(page.locator('h1')).toBeVisible();
-  await expect(page.locator('.lesson-row')).toHaveCount(37);
+  await expect(page.locator('.lesson-row')).toHaveCount(41);
   await expect(page.locator('.module')).toHaveCount(9);
   // Трек «Конфиги»: уроки трека и переключение файлов в витрине.
   await expect(page.locator('.track-lessons a')).toHaveCount(5);

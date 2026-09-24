@@ -26,6 +26,17 @@ class LessonsContentTest {
 
     private static final LessonRepository LESSONS = LessonRepositoryHolder.get();
 
+    /**
+     * Только часть уроков — чтобы быстро проверить те, над которыми идёт работа:
+     * {@code mvn test -Dtest=LessonsContentTest -Dlessons=sqlite-jdbc,prepared-statements}.
+     */
+    private static final List<String> ONLY = System.getProperty("lessons", "").isBlank() ? List.of()
+            : List.of(System.getProperty("lessons").split(","));
+
+    private static Stream<Lesson> selected() {
+        return LESSONS.findAll().stream().filter(lesson -> ONLY.isEmpty() || ONLY.contains(lesson.slug()));
+    }
+
     @Autowired
     LessonRepository repository;
 
@@ -39,11 +50,11 @@ class LessonsContentTest {
     CodeRunner runner;
 
     static Stream<String> slugs() {
-        return LESSONS.findAll().stream().map(Lesson::slug);
+        return selected().map(Lesson::slug);
     }
 
     static Stream<Arguments> quizzes() {
-        return LESSONS.findAll().stream().flatMap(lesson -> lesson.quizzes().stream()
+        return selected().flatMap(lesson -> lesson.quizzes().stream()
                 .filter(Quiz::asksForOutput)
                 .map(quiz -> Arguments.of(lesson.slug(), quiz.question() + " / " + quiz.options().get(quiz.answer()), quiz)));
     }

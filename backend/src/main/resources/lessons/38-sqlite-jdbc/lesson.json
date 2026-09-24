@@ -1,0 +1,55 @@
+{
+  "module": "Базы данных",
+  "title": "SQLite и JDBC",
+  "summary": "Первая база данных: таблицы, SQL-запросы, ResultSet и агрегатные функции.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "Steve 95\nAlex 120\nNotch 80\nSteve 60\nAlex 40\nNotch 75\n",
+      "expectedOutput": "Игр: 6\nИгроков: 3\nРекорд: 120 (Alex)\nЛучшие игроки:\n1. Alex — 120\n2. Steve — 95\n3. Notch — 80\n",
+      "hidden": false
+    },
+    {
+      "name": "Одна партия",
+      "stdin": "Ада 10\n",
+      "expectedOutput": "Игр: 1\nИгроков: 1\nРекорд: 10 (Ада)\nЛучшие игроки:\n1. Ада — 10\n",
+      "hidden": false
+    },
+    {
+      "name": "Партий нет",
+      "stdin": "",
+      "expectedOutput": "Игр: 0\nИгроков: 0\nРекордов пока нет\n",
+      "hidden": false
+    },
+    {
+      "name": "Равные очки",
+      "stdin": "Bob 50\nAmy 50\nCid 20\nDan 50\nEve 10\n",
+      "expectedOutput": "Игр: 5\nИгроков: 5\nРекорд: 50 (Amy)\nЛучшие игроки:\n1. Amy — 50\n2. Bob — 50\n3. Dan — 50\n",
+      "hidden": true
+    },
+    {
+      "name": "Личный рекорд, а не сумма",
+      "stdin": "Steve 30\nSteve 30\nSteve 30\nAlex 50\nNotch 45\nKai 44\nNotch 10\n",
+      "expectedOutput": "Игр: 7\nИгроков: 4\nРекорд: 50 (Alex)\nЛучшие игроки:\n1. Alex — 50\n2. Notch — 45\n3. Kai — 44\n",
+      "hidden": true
+    },
+    {
+      "name": "Два игрока и нулевой счёт",
+      "stdin": "Маша 0\nПетя 0\nМаша 0\n",
+      "expectedOutput": "Игр: 3\nИгроков: 2\nРекорд: 0 (Маша)\nЛучшие игроки:\n1. Маша — 0\n2. Петя — 0\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Счётчики игр и игроков можно получить одним запросом: `SELECT COUNT(*), COUNT(DISTINCT name) FROM results`. Он вернёт одну строку — вызовите `next()` один раз и прочитайте `getInt(1)` и `getInt(2)`.",
+    "Рекорд с учётом равенства: `SELECT name, score FROM results ORDER BY score DESC, name LIMIT 1`. Вторая колонка сортировки срабатывает, когда в первой значения равны.",
+    "Личный рекорд каждого — `SELECT name, MAX(score) AS best FROM results GROUP BY name`. Добавьте `ORDER BY best DESC, name LIMIT 3` и выводите строки в цикле `while (rows.next())`, считая место.",
+    "Если игр 0, выведите «Рекордов пока нет» и выйдите из метода через `return`: `MAX` у пустой таблицы — это `NULL`."
+  ],
+  "requirements": [
+    { "type": "call", "name": "executeQuery", "message": "Получите данные SQL-запросом через executeQuery." },
+    { "type": "literal", "values": ["GROUP BY"], "message": "Личный рекорд каждого игрока посчитайте в SQL с помощью GROUP BY." },
+    { "type": "literal", "values": ["ORDER BY", "LIMIT"], "message": "Сортируйте и обрезайте список в SQL: ORDER BY и LIMIT." },
+    { "type": "forbidCall", "values": ["sort", "sorted"], "message": "Не сортируйте в Java — пусть сортирует база." }
+  ]
+}

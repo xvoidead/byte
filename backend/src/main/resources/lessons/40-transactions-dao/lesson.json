@@ -1,0 +1,49 @@
+{
+  "module": "Базы данных",
+  "title": "Транзакции и DAO",
+  "summary": "Перевод монет, который не теряет и не создаёт деньги: commit, rollback и ограничения в таблице.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "open Alex 100\nopen Steve 20\ntransfer Alex Steve 30\ntransfer Steve Alex 100\ntransfer Alex Notch 10\nbalance\nhistory\n",
+      "expectedOutput": "Открыт счёт Alex: 100\nОткрыт счёт Steve: 20\nПеревод 30: Alex → Steve\nОшибка: у Steve недостаточно монет\nОшибка: нет счёта Notch\nAlex: 70\nSteve: 50\n#1 Alex → Steve: 30\n",
+      "hidden": false
+    },
+    {
+      "name": "Нет отправителя и неверная сумма",
+      "stdin": "open Alex 10\ntransfer Herobrine Alex 5\ntransfer Alex Alex 5\ntransfer Alex Herobrine 0\nbalance\nhistory\n",
+      "expectedOutput": "Открыт счёт Alex: 10\nОшибка: нет счёта Herobrine\nОшибка: нельзя перевести самому себе\nОшибка: сумма должна быть больше нуля\nAlex: 10\nПереводов нет\n",
+      "hidden": false
+    },
+    {
+      "name": "Монет хватает впритык",
+      "stdin": "open Ann 50\nopen Bob 0\ntransfer Ann Bob 50\ntransfer Ann Bob 1\ntransfer Bob Ann 20\nbalance\nhistory\n",
+      "expectedOutput": "Открыт счёт Ann: 50\nОткрыт счёт Bob: 0\nПеревод 50: Ann → Bob\nОшибка: у Ann недостаточно монет\nПеревод 20: Bob → Ann\nAnn: 20\nBob: 30\n#1 Ann → Bob: 50\n#2 Bob → Ann: 20\n",
+      "hidden": true
+    },
+    {
+      "name": "Неудачные переводы ничего не меняют",
+      "stdin": "open Kai 30\nopen Lia 40\ntransfer Kai Zed 30\ntransfer Kai Lia 31\ntransfer Zed Kai 1\ntransfer Lia Kai -5\nbalance\nhistory\ntransfer Lia Kai 40\nbalance\nhistory\n",
+      "expectedOutput": "Открыт счёт Kai: 30\nОткрыт счёт Lia: 40\nОшибка: нет счёта Zed\nОшибка: у Kai недостаточно монет\nОшибка: нет счёта Zed\nОшибка: сумма должна быть больше нуля\nKai: 30\nLia: 40\nПереводов нет\nПеревод 40: Lia → Kai\nKai: 70\nLia: 0\n#1 Lia → Kai: 40\n",
+      "hidden": true
+    },
+    {
+      "name": "Нехватка важнее отсутствия получателя",
+      "stdin": "open Max 5\ntransfer Max Nobody 10\nopen Max 100\nbalance\n",
+      "expectedOutput": "Открыт счёт Max: 5\nОшибка: у Max недостаточно монет\nСчёт Max уже есть\nMax: 5\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Сначала две проверки без базы: сумма и перевод самому себе. Потом `db.setAutoCommit(false)` и все три изменения внутри `try`.",
+    "Порядок изменений важен для порядка ошибок: сначала списание у отправителя, потом начисление получателю, потом запись в `transfers`.",
+    "Списание: `executeUpdate` бросит `SQLException`, если баланс уйдёт в минус (сработал `CHECK`), и вернёт 0, если счёта нет. Обе ситуации превратите в `TransferException` с нужным текстом.",
+    "В `catch (SQLException | TransferException e)` вызовите `db.rollback()` и бросьте исключение дальше, а в `finally` верните `db.setAutoCommit(true)`. Если всё прошло — `db.commit()`."
+  ],
+  "requirements": [
+    { "type": "call", "name": "setAutoCommit", "message": "Выключите autocommit, чтобы объединить изменения в транзакцию." },
+    { "type": "call", "name": "commit", "message": "Сохраните успешный перевод через commit()." },
+    { "type": "call", "name": "rollback", "message": "Отмените изменения при ошибке через rollback()." },
+    { "type": "class", "name": "AccountDao", "message": "Работа с базой должна остаться в классе AccountDao." }
+  ]
+}

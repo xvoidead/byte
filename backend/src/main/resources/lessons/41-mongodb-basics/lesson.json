@@ -1,0 +1,49 @@
+{
+  "module": "Базы данных",
+  "title": "MongoDB: документы и коллекции",
+  "summary": "Документная база данных: вставка, фильтры, сортировка и операторы обновления.",
+  "tests": [
+    {
+      "name": "Пример",
+      "stdin": "join Steve\njoin Alex\nreward Steve 50\ngive Steve меч\ngive Steve лук\ngive Steve меч\nlevelup Steve\nprofile Steve\nprofile Alex\njoin Steve\ntop\nrich 10\n",
+      "expectedOutput": "Новый игрок: Steve\nНовый игрок: Alex\nSteve получает 50 монет\nSteve получает меч\nSteve получает лук\nУ Steve уже есть меч\nSteve теперь уровня 2\nSteve: уровень 2, монет 50, предметы: меч, лук\nAlex: уровень 1, монет 0, предметов нет\nС возвращением, Steve!\n1. Steve — уровень 2, монет 50\n2. Alex — уровень 1, монет 0\nБогачи: Steve\n",
+      "hidden": false
+    },
+    {
+      "name": "Игрока нет",
+      "stdin": "reward Herobrine 5\ngive Herobrine кирка\nlevelup Herobrine\nprofile Herobrine\ntop\nrich 0\n",
+      "expectedOutput": "Нет игрока Herobrine\nНет игрока Herobrine\nНет игрока Herobrine\nНет игрока Herobrine\nИгроков нет\nБогачей нет\n",
+      "hidden": false
+    },
+    {
+      "name": "Топ из трёх с равенствами",
+      "stdin": "join Dan\njoin Amy\njoin Bob\njoin Cid\nlevelup Bob\nlevelup Cid\nreward Cid 5\nreward Bob 5\nreward Amy 100\nlevelup Dan\nlevelup Dan\ntop\n",
+      "expectedOutput": "Новый игрок: Dan\nНовый игрок: Amy\nНовый игрок: Bob\nНовый игрок: Cid\nBob теперь уровня 2\nCid теперь уровня 2\nCid получает 5 монет\nBob получает 5 монет\nAmy получает 100 монет\nDan теперь уровня 2\nDan теперь уровня 3\n1. Dan — уровень 3, монет 0\n2. Bob — уровень 2, монет 5\n3. Cid — уровень 2, монет 5\n",
+      "hidden": true
+    },
+    {
+      "name": "Монеты копятся и тратятся",
+      "stdin": "join Kai\njoin Lia\nreward Kai 30\nreward Kai 20\nreward Lia 49\nrich 50\nreward Kai -1\nrich 49\nprofile Kai\n",
+      "expectedOutput": "Новый игрок: Kai\nНовый игрок: Lia\nKai получает 30 монет\nKai получает 20 монет\nLia получает 49 монет\nБогачи: Kai\nKai получает -1 монет\nБогачи: Kai, Lia\nKai: уровень 1, монет 49, предметов нет\n",
+      "hidden": true
+    },
+    {
+      "name": "Предметы с пробелами и повторный вход",
+      "stdin": "join Zed\ngive Zed алмазная кирка\ngive Zed факел\ngive Zed алмазная кирка\njoin Zed\nprofile Zed\n",
+      "expectedOutput": "Новый игрок: Zed\nZed получает алмазная кирка\nZed получает факел\nУ Zed уже есть алмазная кирка\nС возвращением, Zed!\nZed: уровень 1, монет 0, предметы: алмазная кирка, факел\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "`reward`: `players.updateOne(Filters.eq(\"name\", name), Updates.inc(\"coins\", coins))`. Если `getMatchedCount()` равен 0, игрока нет.",
+    "`give`: то же с `Updates.addToSet(\"items\", item)`. Подошёл, но не изменился (`getModifiedCount() == 0`) — предмет уже был.",
+    "`levelup`: `findOneAndUpdate(фильтр, Updates.inc(\"level\", 1), new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER))` вернёт обновлённый документ или `null`.",
+    "`top`: `players.find().sort(Sorts.orderBy(Sorts.descending(\"level\"), Sorts.descending(\"coins\"), Sorts.ascending(\"name\"))).limit(3)`. Для `rich` — `find(Filters.gte(\"coins\", minCoins)).sort(Sorts.ascending(\"name\"))`."
+  ],
+  "requirements": [
+    { "type": "call", "name": "updateOne", "message": "Меняйте документы в базе через updateOne." },
+    { "type": "call", "name": "addToSet", "message": "Для предметов используйте Updates.addToSet — он не допустит повторов." },
+    { "type": "call", "name": "findOneAndUpdate", "message": "Для levelup используйте findOneAndUpdate, чтобы сразу получить новый уровень." },
+    { "type": "forbidCall", "values": ["Collections.sort", "Arrays.sort", "sorted", "comparing"], "message": "Не сортируйте в Java — сортировку делает запрос." }
+  ]
+}
