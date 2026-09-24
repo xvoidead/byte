@@ -62,6 +62,12 @@ class ApiTest {
     }
 
     @Test
+    void statsAreHiddenWithoutConfiguredToken() throws Exception {
+        mvc.perform(get("/api/admin/stats").header("Authorization", "Bearer "))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void unknownLessonIs404() throws Exception {
         mvc.perform(get("/api/lessons/nope"))
                 .andExpect(status().isNotFound())

@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { track } from '../analytics';
 import { useTitle } from '../components/useTitle';
 
 const Ide = lazy(() => import('../ide/Ide'));
@@ -32,9 +33,14 @@ export function PlaygroundPage() {
       </div>
       <div className="playground-ide">
         <Suspense fallback={<div className="ide-loading">Загружаем редактор…</div>}>
-          <Ide storageKey="playground" initialCode={SAMPLE} />
+          <Ide storageKey="playground" initialCode={SAMPLE} onRun={onPlaygroundRun} />
         </Suspense>
       </div>
     </main>
   );
+}
+
+function onPlaygroundRun(status: string, errorCode: string | null) {
+  track('run', undefined, status);
+  if (errorCode) track('compile_error', undefined, errorCode);
 }

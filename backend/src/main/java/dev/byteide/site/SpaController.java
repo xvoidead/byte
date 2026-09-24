@@ -53,7 +53,11 @@ public class SpaController {
 
     @GetMapping("/stats")
     public ResponseEntity<String> stats() {
-        return page.render(HttpStatus.OK, new SpaPage.Meta("Статистика — byte", SpaPage.DEFAULT_DESCRIPTION));
+        ResponseEntity<String> response = page.render(HttpStatus.OK,
+                new SpaPage.Meta("Статистика — byte", SpaPage.DEFAULT_DESCRIPTION));
+        // Служебная страница: не индексировать, даже если на неё где-то сослались.
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders())
+                .header("X-Robots-Tag", "noindex").body(response.getBody());
     }
 
     ResponseEntity<String> notFound() {

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { track } from '../analytics';
 import { api, ApiError } from '../api';
 import { Markdown } from '../components/Markdown';
 import { QuizCard } from '../components/QuizCard';
@@ -8,7 +9,14 @@ import { highlightJava } from '../components/highlightJava';
 import { useAsync } from '../components/useAsync';
 import { useProgress } from '../components/useProgress';
 import { useTitle } from '../components/useTitle';
-import { loadLessonState, markCompleted, saveCode, saveLessonState, type LessonState } from '../storage';
+import {
+  completedLessons,
+  loadLessonState,
+  markCompleted,
+  saveCode,
+  saveLessonState,
+  type LessonState,
+} from '../storage';
 import type { CheckResult, LessonDetails } from '../types';
 
 const Ide = lazy(() => import('../ide/Ide'));
@@ -77,6 +85,11 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
     [taskIndex, update],
   );
 
+  useEffect(() => track('lesson_open', lesson.slug), [lesson.slug]);
+  useEffect(() => {
+    track('step_view', lesson.slug, current === taskIndex ? 'task' : String(current));
+  }, [lesson.slug, current, taskIndex]);
+
   // Адрес страницы следует за шагом, чтобы ссылкой можно было поделиться.
   useEffect(() => {
     if (searchParams.get('step') !== String(current + 1)) {
@@ -96,12 +109,31 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [goTo]);
 
-  const onPassed = useCallback(() => markCompleted(lesson.slug), [lesson.slug]);
+  const onPassed = useCallback(() => {
+    if (!completedLessons().has(lesson.slug)) track('lesson_complete', lesson.slug);
+    markCompleted(lesson.slug);
+  }, [lesson.slug]);
   const onChecked = useCallback(
     (result: CheckResult) => {
+      track('check', lesson.slug, null, result.passed ? 1 : 0);
+      if (!result.compiled) {
+        const error = result.diagnostics.find((d) => d.severity === 'ERROR');
+        if (error?.code) track('compile_error', lesson.slug, error.code);
+      }
+      new Set(result.tests.filter((t) => !t.passed).map((t) => t.name)).forEach((name) =>
+        track('test_failed', lesson.slug, name),
+      );
+      result.requirements.filter((r) => !r.passed).forEach((r) => track('requirement_failed', lesson.slug, r.message));
       if (!result.passed) update((s) => ({ ...s, failedChecks: s.failedChecks + 1 }));
     },
-    [update],
+    [lesson.slug, update],
+  );
+  const onRun = useCallback(
+    (status: string, errorCode: string | null) => {
+      track('run', lesson.slug, status);
+      if (errorCode) track('compile_error', lesson.slug, errorCode);
+    },
+    [lesson.slug],
   );
 
   const step = current < taskIndex ? lesson.steps[current] : null;
@@ -128,7 +160,8 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
                     key={i}
                     quiz={block.quiz}
                     state={state.quizzes[`${current}-${i}`]}
-                    onAnswer={(choice) =>
+                    onAnswer={(choice) => {
+                      track('quiz_answer', lesson.slug, `${current}-${i}`, choice === block.quiz.answer ? 1 : 0);
                       update((s) => {
                         const key = `${current}-${i}`;
                         const previous = s.quizzes[key];
@@ -143,8 +176,8 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
                             },
                           },
                         };
-                      })
-                    }
+                      });
+                    }}
                   />
                 ),
               )}
@@ -154,8 +187,14 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
               lesson={lesson}
               state={state}
               completed={completed}
-              onRevealHint={() => update((s) => ({ ...s, hints: Math.min(lesson.hints.length, s.hints + 1) }))}
-              onSolutionShown={() => update((s) => ({ ...s, solutionShown: true }))}
+              onRevealHint={() => {
+                track('hint_open', lesson.slug, null, Math.min(lesson.hints.length, state.hints + 1));
+                update((s) => ({ ...s, hints: Math.min(lesson.hints.length, s.hints + 1) }));
+              }}
+              onSolutionShown={() => {
+                track('solution_open', lesson.slug, null, completed ? 1 : 0);
+                update((s) => ({ ...s, solutionShown: true }));
+              }}
               onInsertSolution={(code) => {
                 saveCode(`lesson:${lesson.slug}`, code);
                 setIdeVersion((v) => v + 1);
@@ -201,6 +240,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
             lessonSlug={lesson.slug}
             onPassed={onPassed}
             onChecked={onChecked}
+            onRun={onRun}
           />
         </Suspense>
       </section>

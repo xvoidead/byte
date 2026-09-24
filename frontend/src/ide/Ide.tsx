@@ -116,7 +116,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
             compileErrors: event.diagnostics.filter((d) => d.severity === 'ERROR'),
           });
           setMood('sad');
-          callbacks.current.onRun?.('COMPILATION_ERROR', event.diagnostics[0]?.code ?? null);
+          callbacks.current.onRun?.('COMPILATION_ERROR', firstErrorCode(event.diagnostics));
           break;
         case 'out':
           queueOutput(event.stream, event.data);
@@ -183,7 +183,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
         });
       }
       setMood(result.status === 'SUCCESS' ? 'idle' : 'sad');
-      callbacks.current.onRun?.(result.status, result.diagnostics[0]?.code ?? null);
+      callbacks.current.onRun?.(result.status, firstErrorCode(result.diagnostics));
     } catch (e) {
       setTerminal({
         ...EMPTY_TERMINAL,
@@ -519,4 +519,8 @@ function ResetIcon() {
       />
     </svg>
   );
+}
+
+function firstErrorCode(diagnostics: Diagnostic[]): string | null {
+  return diagnostics.find((d) => d.severity === 'ERROR')?.code ?? null;
 }

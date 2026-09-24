@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { track } from '../analytics';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Mascot } from './Mascot';
 
@@ -15,6 +17,9 @@ export function Logo() {
 
 export function Layout() {
   const location = useLocation();
+  useEffect(() => {
+    if (location.pathname !== '/stats') track('page_view', undefined, location.pathname);
+  }, [location.pathname]);
   return (
     <div className="app">
       <header className="header">

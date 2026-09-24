@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import '@fontsource-variable/inter';
@@ -11,6 +11,8 @@ import { LessonPage } from './pages/LessonPage';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { PrivacyPage, TermsPage } from './pages/LegalPages';
 import './styles.css';
+
+const StatsPage = lazy(() => import('./pages/StatsPage'));
 
 function NotFound() {
   useTitle('Страница не найдена — byte');
@@ -33,6 +35,14 @@ createRoot(document.getElementById('root')!).render(
           <Route path="playground" element={<PlaygroundPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="terms" element={<TermsPage />} />
+          <Route
+            path="stats"
+            element={
+              <Suspense fallback={<div className="page-state">Загружаем…</div>}>
+                <StatsPage />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

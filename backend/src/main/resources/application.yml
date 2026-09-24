@@ -4,6 +4,15 @@ spring:
   threads:
     virtual:
       enabled: true
+  # Анонимная аналитика. По умолчанию — в памяти; в продакшене укажите файл,
+  # например BYTE_ANALYTICS_DB=file:/app/data/analytics
+  datasource:
+    url: jdbc:h2:${BYTE_ANALYTICS_DB:mem:analytics};DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
   web:
     resources:
       cache:
@@ -25,6 +34,9 @@ server:
   shutdown: graceful
 
 byte:
+  analytics:
+    admin-token: ${BYTE_ADMIN_TOKEN:}
+    retention-days: 180
   site:
     base-url: ${BYTE_BASE_URL:}
     contact-email: ${BYTE_CONTACT_EMAIL:}
