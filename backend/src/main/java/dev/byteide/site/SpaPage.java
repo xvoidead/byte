@@ -39,7 +39,7 @@ public class SpaPage {
 
     public static final String DEFAULT_TITLE = "byte — Java в браузере";
     public static final String DEFAULT_DESCRIPTION =
-            "Изучайте Java с настоящей IDE прямо в браузере: короткие уроки, задания с автопроверкой и песочница.";
+            "Изучайте Java с настоящей IDE прямо в браузере: короткие уроки, задания с автопроверкой, песочница и проекты с конфигами на YAML и JSON.";
 
     private final ResourceLoader resources;
     private final WebProperties web;

@@ -7,6 +7,10 @@ test('главная показывает весь курс', async ({ page, bas
   await expect(page.locator('h1')).toBeVisible();
   await expect(page.locator('.lesson-row')).toHaveCount(37);
   await expect(page.locator('.module')).toHaveCount(9);
+  // Трек «Конфиги»: уроки трека и переключение файлов в витрине.
+  await expect(page.locator('.track-lessons a')).toHaveCount(5);
+  await page.getByRole('tab', { name: 'players.json' }).click();
+  await expect(page.locator('.config-window .window-console')).toContainText('Боб: 110');
   await page.locator('.lesson-row').first().click();
   await expect(page).toHaveURL(/\/lessons\/hello-world/);
   await expect(page.locator('.stepper')).toBeVisible();

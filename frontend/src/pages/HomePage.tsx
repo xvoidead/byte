@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { ConfigShowcase } from '../components/ConfigShowcase';
 import { Reveal } from '../components/motion';
 import { ShowcaseDemo } from '../components/ShowcaseDemo';
 import { useAsync } from '../components/useAsync';
@@ -16,6 +17,8 @@ export function HomePage() {
   const list = lessons.status === 'ready' ? lessons.data : [];
   const nextLesson = list.find((l) => !done.has(l.slug)) ?? list[0];
   const completed = list.filter((l) => done.has(l.slug)).length;
+  const track = list.filter((l) => l.module === CONFIG_MODULE);
+  const nextInTrack = track.find((l) => !done.has(l.slug)) ?? track[0];
 
   return (
     <main className="home">
@@ -34,7 +37,8 @@ export function HomePage() {
           </span>
         </h1>
         <p className="hero-lead intro" style={delay(520)}>
-          Короткие уроки, настоящий компилятор и задания с мгновенной проверкой. Откройте урок — и пишите код.
+          Короткие уроки, настоящий компилятор и задания с мгновенной проверкой — от первой строки кода до проектов с
+          конфигами и JSON. Откройте урок и пишите код.
         </p>
         <div className="hero-actions intro" style={delay(660)}>
           <Link className="btn btn-primary btn-lg" to={nextLesson ? `/lessons/${nextLesson.slug}` : '/lessons/hello-world'}>
@@ -61,6 +65,48 @@ export function HomePage() {
         <Feature delay={180} icon={<ShieldIcon />} title="Мгновенная проверка">
           Каждое задание проверяется тестами, а ошибки компилятора объясняются по-русски.
         </Feature>
+      </section>
+
+      <section className="track" aria-labelledby="track-title">
+        <Reveal className="track-text">
+          <span className="pill">
+            <span className="pill-dot" />
+            Новый трек
+          </span>
+          <h2 className="section-title" id="track-title">
+            Конфиги и данные
+          </h2>
+          <p className="section-lead">
+            Настоящие программы хранят настройки и данные в файлах. В пяти уроках-проектах вы прочитаете YAML, создадите
+            конфиг из настроек по умолчанию, проверите значения, сохраните игроков в JSON и перенесёте старый конфиг на
+            новую версию.
+          </p>
+          <ul className="track-points">
+            <li>Несколько классов и файлов во вкладках, как в IDE</li>
+            <li>Программа читает и пишет файлы — новые сразу видны во вкладках</li>
+            <li>SnakeYAML и Gson уже подключены</li>
+          </ul>
+          {track.length > 0 && (
+            <ol className="track-lessons">
+              {track.map((lesson) => (
+                <li key={lesson.slug}>
+                  <Link to={`/lessons/${lesson.slug}`} className={done.has(lesson.slug) ? 'done' : ''}>
+                    <span className="track-lesson-num">{String(lesson.order).padStart(2, '0')}</span>
+                    {lesson.title}
+                    {done.has(lesson.slug) && <CheckIcon />}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+          <Link className="btn btn-secondary" to={`/lessons/${nextInTrack?.slug ?? 'yaml-config'}`}>
+            {track.some((l) => done.has(l.slug)) ? 'Продолжить трек' : 'Начать трек'}
+            <ArrowIcon />
+          </Link>
+        </Reveal>
+        <Reveal className="track-demo" delay={120}>
+          <ConfigShowcase />
+        </Reveal>
       </section>
 
       <section className="program">
@@ -126,6 +172,8 @@ export function HomePage() {
     </main>
   );
 }
+
+const CONFIG_MODULE = 'Конфиги';
 
 function Feature({ icon, title, delay, children }: { icon: ReactNode; title: string; delay: number; children: ReactNode }) {
   return (
