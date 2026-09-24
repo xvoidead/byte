@@ -30,6 +30,24 @@ numbers.add(42);             // int автоматически превраща�
 int first = numbers.get(0);  // и обратно
 ```
 
+```quiz
+? Что выведет программа?
+    import java.util.*;
+    public class Main {
+        public static void main(String[] args) {
+            List<Integer> list = new ArrayList<>(List.of(10, 20, 30));
+            list.add(1, 15);
+            list.remove(Integer.valueOf(30));
+            System.out.println(list);
+        }
+    }
+- [10, 20, 15]
++ [10, 15, 20]
+- [15, 10, 20]
+- [10, 15, 20, 30]
+> `add(1, 15)` вставляет 15 на позицию 1, а `remove(Integer.valueOf(30))` удаляет значение 30, а не элемент с индексом 30.
+```
+
 ## HashMap — словарь
 
 `Map` хранит пары **ключ → значение**. По ключу можно быстро найти значение:
@@ -55,6 +73,15 @@ System.out.println(ages.getOrDefault("Вика", 0)); // 0
 for (Map.Entry<String, Integer> entry : ages.entrySet()) {
     System.out.println(entry.getKey() + " → " + entry.getValue());
 }
+```
+
+```quiz
+? Что вернёт `map.get("Вика")`, если такого ключа в map нет?
+- 0
+- Пустую строку
++ null
+- Выбросит исключение
+> Если ключа нет, `get` возвращает `null`. Чтобы получить значение по умолчанию, используйте `getOrDefault`.
 ```
 
 ## Порядок элементов

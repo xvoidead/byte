@@ -7,8 +7,15 @@ import dev.byteide.runner.RunStatus;
 
 /**
  * Итог проверки решения. Для скрытых тестов ввод и ожидаемый вывод не раскрываются.
+ *
+ * @param requirements выполнены ли требования к устройству решения (пусто, если код не скомпилировался)
  */
-public record CheckResult(boolean passed, boolean compiled, List<Diagnostic> diagnostics, List<TestOutcome> tests) {
+public record CheckResult(
+        boolean passed,
+        boolean compiled,
+        List<Diagnostic> diagnostics,
+        List<TestOutcome> tests,
+        List<CodeInspector.Outcome> requirements) {
 
     public record TestOutcome(
             String name,

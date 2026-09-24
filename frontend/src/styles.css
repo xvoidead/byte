@@ -768,15 +768,9 @@ kbd {
   font-size: 12px;
   font-weight: 500;
 }
-.jump-to-task {
-  display: inline-block;
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
 .task {
   position: relative;
-  margin-top: 48px;
+  margin-top: 4px;
   padding: 28px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--accent-line);
@@ -846,6 +840,326 @@ kbd {
 .lesson-ide {
   min-height: 0;
   min-width: 0;
+}
+
+/* Шаги урока */
+.stepper {
+  margin: 20px 0 28px;
+}
+.stepper-bars {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stepper-bars li {
+  flex: 1;
+}
+.stepper-bar {
+  display: block;
+  width: 100%;
+  height: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: background 0.3s var(--ease), transform 0.2s var(--ease);
+}
+.stepper-bar:hover {
+  transform: scaleY(1.6);
+}
+.stepper-bar.visited {
+  background: rgba(168, 181, 255, 0.45);
+}
+.stepper-bar.current {
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(168, 181, 255, 0.5);
+}
+.stepper-bar.task:not(.visited):not(.current) {
+  background: rgba(168, 181, 255, 0.14);
+}
+.stepper-bar:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.stepper-caption {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.stepper-title {
+  color: var(--text-2);
+}
+
+.step {
+  animation: step-in-forward 0.5s var(--ease-out) both;
+}
+.step.step-back {
+  animation-name: step-in-back;
+}
+@keyframes step-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+    filter: blur(4px);
+  }
+}
+@keyframes step-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+    filter: blur(4px);
+  }
+}
+.step-title {
+  margin: 0 0 14px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.step-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* Вопросы */
+.quiz {
+  margin: 28px 0;
+  padding: 20px 22px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.3s var(--ease);
+}
+.quiz.is-solved {
+  border-color: rgba(111, 211, 165, 0.35);
+}
+.quiz-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.quiz-question .markdown p:last-child {
+  margin-bottom: 0;
+}
+.quiz-question .markdown {
+  color: var(--text);
+  font-weight: 500;
+}
+.quiz-code {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: #d6d9e0;
+}
+.quiz-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.quiz-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.quiz-option:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.quiz-option:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.quiz-option:disabled {
+  cursor: default;
+}
+.quiz-options.mono .quiz-option-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+.quiz-option-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.quiz-option.correct {
+  border-color: rgba(111, 211, 165, 0.5);
+  background: var(--ok-soft);
+  color: var(--text);
+}
+.quiz-option.correct .quiz-option-mark {
+  background: var(--ok);
+  color: #0b1510;
+}
+.quiz-option.wrong {
+  border-color: rgba(255, 122, 133, 0.45);
+  background: var(--fail-soft);
+  animation: shake 0.4s var(--ease);
+}
+.quiz-option.wrong .quiz-option-mark {
+  background: var(--fail);
+  color: #1a0b0d;
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+.quiz-feedback {
+  margin: 14px 0 0;
+  font-size: 14px;
+  animation: fade-up 0.4s var(--ease-out) both;
+}
+.quiz-feedback.wrong {
+  color: var(--fail);
+}
+.quiz-feedback.correct strong {
+  color: var(--ok);
+}
+.quiz-feedback.revealed strong {
+  color: var(--text);
+}
+.quiz-feedback .markdown {
+  margin-top: 6px;
+  font-size: 14px;
+}
+.quiz-feedback .markdown p:last-child {
+  margin-bottom: 0;
+}
+
+/* Задание: требования, подсказки, решение */
+.task-subtitle {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.task-requirements {
+  margin: 20px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+}
+.task-requirements ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.hints {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 24px;
+}
+.hint {
+  align-self: stretch;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(245, 197, 110, 0.25);
+  background: var(--warn-soft);
+  animation: fade-up 0.4s var(--ease-out) both;
+}
+.hint-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--warn);
+}
+.hint .markdown {
+  font-size: 14px;
+}
+.hint .markdown p:last-child {
+  margin-bottom: 0;
+}
+.solution {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.solution-code {
+  margin: 0 0 10px;
+  padding: 14px 16px;
+  max-height: 420px;
+  overflow: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #d6d9e0;
+  animation: fade-up 0.4s var(--ease-out) both;
+}
+
+/* Требования в результатах проверки */
+.requirements {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+}
+.requirements li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.requirements li.ok .test-icon {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.requirements li.fail {
+  color: var(--text);
+}
+.requirements li.fail .test-icon {
+  color: var(--fail);
+  background: var(--fail-soft);
 }
 
 /* ---------- Markdown ---------- */

@@ -37,6 +37,7 @@ export const api = {
       body: JSON.stringify({ code }),
       signal,
     }),
+  solution: (slug: string) => request<{ code: string }>(`/api/lessons/${encodeURIComponent(slug)}/solution`),
   run: (code: string, stdin: string) =>
     request<RunResult>('/api/run', { method: 'POST', body: JSON.stringify({ code, stdin }) }),
   check: (slug: string, code: string) =>

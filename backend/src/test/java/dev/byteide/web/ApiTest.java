@@ -39,9 +39,20 @@ class ApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Ввод с клавиатуры"))
                 .andExpect(jsonPath("$.examples", hasSize(2)))
-                .andExpect(jsonPath("$.testCount").value(3))
+                .andExpect(jsonPath("$.testCount").value(6))
+                .andExpect(jsonPath("$.steps[0].title").value("Введение"))
+                .andExpect(jsonPath("$.steps[*].blocks[*].type", org.hamcrest.Matchers.hasItem("quiz")))
+                .andExpect(jsonPath("$.hints").isNotEmpty())
+                .andExpect(jsonPath("$.solution").doesNotExist())
                 .andExpect(jsonPath("$.prev").value("variables"))
                 .andExpect(jsonPath("$.next").value("conditions"));
+    }
+
+    @Test
+    void returnsReferenceSolutionSeparately() throws Exception {
+        mvc.perform(get("/api/lessons/input/solution"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code", containsString("nextLong")));
     }
 
     @Test

@@ -28,6 +28,44 @@ export function saveCode(key: string, code: string | null): void {
   write(`code:${key}`, code);
 }
 
+/** Прохождение урока: где остановился ученик, ответы на вопросы, открытые подсказки. */
+export interface QuizState {
+  choice: number;
+  correct: boolean;
+  attempts: number;
+}
+
+export interface LessonState {
+  step: number;
+  visited: number[];
+  quizzes: Record<string, QuizState>;
+  hints: number;
+  failedChecks: number;
+  solutionShown: boolean;
+}
+
+const EMPTY_LESSON_STATE: LessonState = {
+  step: 0,
+  visited: [0],
+  quizzes: {},
+  hints: 0,
+  failedChecks: 0,
+  solutionShown: false,
+};
+
+export function loadLessonState(slug: string): LessonState {
+  try {
+    const parsed = JSON.parse(read(`lesson:${slug}`) ?? 'null');
+    return parsed && typeof parsed === 'object' ? { ...EMPTY_LESSON_STATE, ...parsed } : EMPTY_LESSON_STATE;
+  } catch {
+    return EMPTY_LESSON_STATE;
+  }
+}
+
+export function saveLessonState(slug: string, state: LessonState): void {
+  write(`lesson:${slug}`, JSON.stringify(state));
+}
+
 const COMPLETED = 'completed';
 const listeners = new Set<() => void>();
 

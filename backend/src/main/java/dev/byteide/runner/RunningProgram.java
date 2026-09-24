@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import dev.byteide.sandbox.SandboxLauncher;
 
@@ -53,6 +54,8 @@ public final class RunningProgram {
     private final CompletableFuture<ExecutionResult> result = new CompletableFuture<>();
     private final MarkerFilter stderrFilter = new MarkerFilter();
     private final OutputStream stdin;
+    /** Запись в канал может ждать, пока программа прочитает ввод, поэтому не synchronized (см. RandomTestPool). */
+    private final ReentrantLock inputLock = new ReentrantLock();
 
     private RunningProgram(Process process, Limits limits, Listener listener) {
         this.process = process;
@@ -79,21 +82,27 @@ public final class RunningProgram {
     }
 
     /** Передаёт программе текст так, будто его набрали с клавиатуры. */
-    public synchronized void write(String text) {
+    public void write(String text) {
+        inputLock.lock();
         try {
             stdin.write(text.getBytes(StandardCharsets.UTF_8));
             stdin.flush();
         } catch (IOException ignored) {
             // Программа уже завершилась или закрыла ввод.
+        } finally {
+            inputLock.unlock();
         }
     }
 
     /** Конец ввода (Ctrl+D): Scanner.hasNext() вернёт false. */
-    public synchronized void closeInput() {
+    public void closeInput() {
+        inputLock.lock();
         try {
             stdin.close();
         } catch (IOException ignored) {
             // уже закрыт
+        } finally {
+            inputLock.unlock();
         }
     }
 

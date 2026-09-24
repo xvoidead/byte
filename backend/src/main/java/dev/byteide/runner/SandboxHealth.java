@@ -1,6 +1,7 @@
 package dev.byteide.runner;
 
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,8 @@ public class SandboxHealth {
     private final ProcessExecutionService executor;
     private volatile Boolean verified;
     private volatile String problem;
+    /** Не synchronized: внутри ждём процесс, а это закрепило бы виртуальный поток за носителем. */
+    private final ReentrantLock lock = new ReentrantLock();
 
     public SandboxHealth(JavaCompilationService compiler, ProcessExecutionService executor) {
         this.compiler = compiler;
@@ -86,10 +89,20 @@ public class SandboxHealth {
         return verified;
     }
 
-    private synchronized boolean verify() {
-        if (verified != null) {
-            return verified;
+    private boolean verify() {
+        lock.lock();
+        try {
+            if (verified != null) {
+                return verified;
+            }
+            runProbe();
+        } finally {
+            lock.unlock();
         }
+        return verified;
+    }
+
+    private void runProbe() {
         try {
             CompilationResult compilation = compiler.compile(PROBE);
             if (!compilation.success()) {
@@ -114,6 +127,5 @@ public class SandboxHealth {
         } else {
             log.error("Песочница не работает, запуск программ выключен. {}", problem);
         }
-        return verified;
     }
 }

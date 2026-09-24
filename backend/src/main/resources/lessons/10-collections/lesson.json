@@ -27,5 +27,14 @@
       "expectedOutput": "привет: 1\nУникальных слов: 1\n",
       "hidden": true
     }
-  ]
+  ],
+  "hints": [
+    "Приводите каждое слово к нижнему регистру: `word.toLowerCase()`.",
+    "Счётчик увеличивайте так: `counts.put(w, counts.getOrDefault(w, 0) + 1)` или короче `counts.merge(w, 1, Integer::sum)`.",
+    "TreeMap уже хранит ключи по алфавиту — пройдите по `counts.entrySet()` и напечатайте пары, а в конце — `counts.size()`."
+  ],
+  "random": {
+    "count": 3,
+    "input": "{mixcase:{words:1..25:кот|пёс|java|code|мир|дом|дым|run|test|ёж}}\n"
+  }
 }

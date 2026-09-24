@@ -3,12 +3,56 @@
   "title": "Условия: if, else, switch",
   "summary": "Как программа принимает решения.",
   "tests": [
-    { "name": "Отлично", "stdin": "95\n", "expectedOutput": "Оценка: 5\n", "hidden": false },
-    { "name": "Хорошо", "stdin": "75\n", "expectedOutput": "Оценка: 4\n", "hidden": false },
-    { "name": "Граница 60", "stdin": "60\n", "expectedOutput": "Оценка: 3\n", "hidden": false },
-    { "name": "Неудовлетворительно", "stdin": "12\n", "expectedOutput": "Оценка: 2\n", "hidden": true },
-    { "name": "Граница 90", "stdin": "90\n", "expectedOutput": "Оценка: 5\n", "hidden": true },
-    { "name": "Некорректный балл", "stdin": "101\n", "expectedOutput": "Ошибка: балл должен быть от 0 до 100\n", "hidden": true },
-    { "name": "Отрицательный балл", "stdin": "-1\n", "expectedOutput": "Ошибка: балл должен быть от 0 до 100\n", "hidden": true }
-  ]
+    {
+      "name": "Отлично",
+      "stdin": "95\n",
+      "expectedOutput": "Оценка: 5\n",
+      "hidden": false
+    },
+    {
+      "name": "Хорошо",
+      "stdin": "75\n",
+      "expectedOutput": "Оценка: 4\n",
+      "hidden": false
+    },
+    {
+      "name": "Граница 60",
+      "stdin": "60\n",
+      "expectedOutput": "Оценка: 3\n",
+      "hidden": false
+    },
+    {
+      "name": "Неудовлетворительно",
+      "stdin": "12\n",
+      "expectedOutput": "Оценка: 2\n",
+      "hidden": true
+    },
+    {
+      "name": "Граница 90",
+      "stdin": "90\n",
+      "expectedOutput": "Оценка: 5\n",
+      "hidden": true
+    },
+    {
+      "name": "Некорректный балл",
+      "stdin": "101\n",
+      "expectedOutput": "Ошибка: балл должен быть от 0 до 100\n",
+      "hidden": true
+    },
+    {
+      "name": "Отрицательный балл",
+      "stdin": "-1\n",
+      "expectedOutput": "Ошибка: балл должен быть от 0 до 100\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Сначала проверьте некорректный балл: `if (score < 0 || score > 100)`.",
+    "Дальше проверяйте границы сверху вниз: `score >= 90`, потом `score >= 70`, потом `score >= 50` — первая подходящая ветка и есть ответ.",
+    "Проверьте границы: 90 — это уже «5», а 89 — ещё «4»."
+  ],
+  "random": {
+    "count": 3,
+    "input": "{int:-20..120}\n"
+  }
 }

@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import dev.byteide.lessons.CheckResult;
 import dev.byteide.lessons.Lesson;
 import dev.byteide.lessons.LessonRepository;
+import dev.byteide.lessons.Requirement;
+import dev.byteide.lessons.Step;
 import dev.byteide.lessons.SolutionChecker;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -53,8 +55,19 @@ public class LessonController {
                 .filter(t -> !t.hidden())
                 .map(t -> new Example(t.name(), t.stdin(), t.expectedOutput()))
                 .toList();
+        int randomCount = lesson.random() == null ? 0 : lesson.random().count();
         return new LessonDetails(lesson.slug(), lesson.order(), lesson.module(), lesson.title(), lesson.summary(),
-                lesson.theory(), lesson.task(), lesson.starterCode(), examples, lesson.tests().size(), prev, next);
+                lesson.steps(), lesson.task(), lesson.starterCode(), examples, lesson.tests().size() + randomCount,
+                lesson.hints(), lesson.requirements().stream().map(Requirement::message).toList(), prev, next);
+    }
+
+    /**
+     * Эталонное решение. Интерфейс показывает его после решения задачи или когда ученик открыл все подсказки
+     * и несколько раз не прошёл проверку.
+     */
+    @GetMapping("/{slug}/solution")
+    public Solution solution(@PathVariable String slug) {
+        return new Solution(find(slug).solution());
     }
 
     @PostMapping("/{slug}/check")
@@ -80,13 +93,18 @@ public class LessonController {
             String module,
             String title,
             String summary,
-            String theory,
+            List<Step> steps,
             String task,
             String starterCode,
             List<Example> examples,
             int testCount,
+            List<String> hints,
+            List<String> requirements,
             String prev,
             String next) {
+    }
+
+    public record Solution(String code) {
     }
 
     public record Example(String name, String stdin, String expectedOutput) {

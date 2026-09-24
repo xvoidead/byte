@@ -22,11 +22,27 @@ export function CheckOutput({
   }
 
   const passed = result.tests.filter((t) => t.passed).length;
+  const testsPassed = passed === result.tests.length;
+  const failedRequirements = result.requirements.filter((r) => !r.passed);
   return (
     <div className="run-output">
       <div className={`run-status ${result.passed ? 'ok' : 'fail'}`}>
-        {result.passed ? 'Все тесты пройдены — задание выполнено' : `Пройдено тестов: ${passed} из ${result.tests.length}`}
+        {result.passed
+          ? 'Все тесты пройдены — задание выполнено'
+          : testsPassed
+            ? 'Тесты пройдены, но решение не выполняет условия задания'
+            : `Пройдено тестов: ${passed} из ${result.tests.length}`}
       </div>
+      {result.requirements.length > 0 && (
+        <ul className={`requirements ${failedRequirements.length ? 'has-failures' : ''}`}>
+          {result.requirements.map((r, i) => (
+            <li key={i} className={r.passed ? 'ok' : 'fail'}>
+              <span className="test-icon">{r.passed ? '✓' : '✗'}</span>
+              {r.message}
+            </li>
+          ))}
+        </ul>
+      )}
       <ul className="tests">
         {result.tests.map((test, i) => (
           <TestItem key={i} test={test} index={i + 1} />

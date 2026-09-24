@@ -20,7 +20,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Загружает уроки из classpath: {@code lessons/NN-slug/} с файлами
- * {@code lesson.json}, {@code theory.md}, {@code task.md} и {@code Main.java}.
+ * {@code lesson.json}, {@code theory.md}, {@code task.md}, {@code Main.java} (стартовый код)
+ * и {@code solution.java} (эталонное решение — для разбора и случайных тестов).
  */
 @Repository
 public class LessonRepository {
@@ -69,16 +70,25 @@ public class LessonRepository {
                 throw new IllegalStateException("Каталог урока должен называться NN-slug: " + dirName);
             }
             LessonMeta lessonMeta = jsonMapper.readValue(meta.getInputStream(), LessonMeta.class);
+            if (lessonMeta.random() != null) {
+                new RandomInput(lessonMeta.random().input());
+            }
             return new Lesson(
                     matcher.group(2),
                     Integer.parseInt(matcher.group(1)),
                     lessonMeta.module(),
                     lessonMeta.title(),
                     lessonMeta.summary(),
-                    text(meta.createRelative("theory.md")),
+                    LessonMarkdown.parseSteps(text(meta.createRelative("theory.md"))),
                     text(meta.createRelative("task.md")),
                     text(meta.createRelative("Main.java")),
-                    lessonMeta.tests() == null ? List.of() : List.copyOf(lessonMeta.tests()));
+                    text(meta.createRelative("solution.java")),
+                    listOf(lessonMeta.tests()),
+                    listOf(lessonMeta.hints()),
+                    listOf(lessonMeta.requirements()),
+                    lessonMeta.random());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Ошибка в уроке " + meta + ": " + e.getMessage(), e);
         } catch (IOException e) {
             throw new UncheckedIOException("Не удалось прочитать урок " + meta, e);
         }
@@ -88,6 +98,11 @@ public class LessonRepository {
         return resource.getContentAsString(StandardCharsets.UTF_8);
     }
 
-    private record LessonMeta(String module, String title, String summary, List<LessonTest> tests) {
+    private static <T> List<T> listOf(List<T> list) {
+        return list == null ? List.of() : List.copyOf(list);
+    }
+
+    private record LessonMeta(String module, String title, String summary, List<LessonTest> tests,
+                              List<String> hints, List<Requirement> requirements, Lesson.RandomTests random) {
     }
 }

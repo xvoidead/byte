@@ -34,12 +34,29 @@ export interface Example {
   expectedOutput: string;
 }
 
+export interface Quiz {
+  question: string;
+  code: string | null;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export type StepBlock = { type: 'text'; markdown: string } | { type: 'quiz'; quiz: Quiz };
+
+export interface Step {
+  title: string;
+  blocks: StepBlock[];
+}
+
 export interface LessonDetails extends LessonSummary {
-  theory: string;
+  steps: Step[];
   task: string;
   starterCode: string;
   examples: Example[];
   testCount: number;
+  hints: string[];
+  requirements: string[];
   prev: string | null;
   next: string | null;
 }
@@ -55,9 +72,15 @@ export interface TestOutcome {
   stderr: string | null;
 }
 
+export interface RequirementOutcome {
+  message: string;
+  passed: boolean;
+}
+
 export interface CheckResult {
   passed: boolean;
   compiled: boolean;
   diagnostics: Diagnostic[];
   tests: TestOutcome[];
+  requirements: RequirementOutcome[];
 }

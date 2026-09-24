@@ -3,9 +3,46 @@
   "title": "Классы и объекты",
   "summary": "Основа объектно-ориентированного программирования.",
   "tests": [
-    { "name": "Пополнение и снятие", "stdin": "deposit 100\nwithdraw 30\nbalance\n", "expectedOutput": "Баланс: 70\n", "hidden": false },
-    { "name": "Недостаточно средств", "stdin": "deposit 50\nwithdraw 80\nbalance\n", "expectedOutput": "Недостаточно средств\nБаланс: 50\n", "hidden": false },
-    { "name": "Некорректная сумма", "stdin": "deposit -5\ndeposit 0\nwithdraw -1\nbalance\n", "expectedOutput": "Сумма должна быть положительной\nСумма должна быть положительной\nСумма должна быть положительной\nБаланс: 0\n", "hidden": true },
-    { "name": "Много операций", "stdin": "deposit 1000\nwithdraw 1\nbalance\nwithdraw 999\nbalance\nwithdraw 1\ndeposit 7\nbalance\n", "expectedOutput": "Баланс: 999\nБаланс: 0\nНедостаточно средств\nБаланс: 7\n", "hidden": true }
-  ]
+    {
+      "name": "Пополнение и снятие",
+      "stdin": "deposit 100\nwithdraw 30\nbalance\n",
+      "expectedOutput": "Баланс: 70\n",
+      "hidden": false
+    },
+    {
+      "name": "Недостаточно средств",
+      "stdin": "deposit 50\nwithdraw 80\nbalance\n",
+      "expectedOutput": "Недостаточно средств\nБаланс: 50\n",
+      "hidden": false
+    },
+    {
+      "name": "Некорректная сумма",
+      "stdin": "deposit -5\ndeposit 0\nwithdraw -1\nbalance\n",
+      "expectedOutput": "Сумма должна быть положительной\nСумма должна быть положительной\nСумма должна быть положительной\nБаланс: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Много операций",
+      "stdin": "deposit 1000\nwithdraw 1\nbalance\nwithdraw 999\nbalance\nwithdraw 1\ndeposit 7\nbalance\n",
+      "expectedOutput": "Баланс: 999\nБаланс: 0\nНедостаточно средств\nБаланс: 7\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "В `deposit` сначала проверьте `if (amount <= 0)` — напечатайте сообщение и выйдите из метода через `return`.",
+    "В `withdraw` после проверки суммы проверьте, хватает ли денег: `if (amount > balance)`.",
+    "Меняйте баланс, только когда все проверки пройдены: `balance += amount` или `balance -= amount`."
+  ],
+  "requirements": [
+    {
+      "type": "privateField",
+      "className": "BankAccount",
+      "name": "balance",
+      "message": "Поле balance должно остаться приватным."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:3..10:{choice:deposit|withdraw} {int:-20..400}\n}balance\n"
+  }
 }

@@ -14,23 +14,30 @@ import dev.byteide.runner.RunStatus;
 public class SolutionChecker {
 
     private final CodeRunner runner;
+    private final CodeInspector inspector;
+    private final RandomTestPool randomTests;
 
-    public SolutionChecker(CodeRunner runner) {
+    public SolutionChecker(CodeRunner runner, CodeInspector inspector, RandomTestPool randomTests) {
         this.runner = runner;
+        this.inspector = inspector;
+        this.randomTests = randomTests;
     }
 
     public CheckResult check(Lesson lesson, String source) {
-        List<LessonTest> tests = lesson.tests();
+        List<LessonTest> tests = new ArrayList<>(lesson.tests());
+        tests.addAll(randomTests.sample(lesson));
         return runner.runEach(source, tests.stream().map(LessonTest::stdin).toList(),
-                compilation -> new CheckResult(false, false, compilation.diagnostics(), List.of()),
+                compilation -> new CheckResult(false, false, compilation.diagnostics(), List.of(), List.of()),
                 results -> {
                     List<CheckResult.TestOutcome> outcomes = new ArrayList<>();
                     for (int i = 0; i < tests.size(); i++) {
                         outcomes.add(outcome(tests.get(i), results.get(i)));
                     }
-                    boolean passed = outcomes.stream().allMatch(CheckResult.TestOutcome::passed);
+                    List<CodeInspector.Outcome> requirements = inspector.check(source, lesson.requirements());
+                    boolean passed = outcomes.stream().allMatch(CheckResult.TestOutcome::passed)
+                            && requirements.stream().allMatch(CodeInspector.Outcome::passed);
                     List<Diagnostic> diagnostics = results.isEmpty() ? List.of() : results.getFirst().diagnostics();
-                    return new CheckResult(passed, true, diagnostics, outcomes);
+                    return new CheckResult(passed, true, diagnostics, outcomes, requirements);
                 });
     }
 
