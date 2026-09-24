@@ -2,6 +2,7 @@ package dev.byteide.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -93,14 +94,29 @@ class SandboxSecurityTest {
 
     @Test
     void stopsProgramThatBurnsCpuInManyThreads() {
-        RunResult result = run("""
-                for (int i = 0; i < 8; i++) {
-                    new Thread(() -> { while (true) { } }).start();
+        // Лимит процессорного времени учитывает все потоки и срабатывает задолго до лимита по часам,
+        // сколько бы ядер ни было у машины.
+        RunnerProperties defaults = RunnerProperties.defaults();
+        RunnerProperties properties = new RunnerProperties(Duration.ofSeconds(10), Duration.ofSeconds(1),
+                defaults.interactiveTimeout(), defaults.maxMemoryMb(), defaults.maxThreads(), defaults.maxOutputChars(),
+                defaults.maxSourceLength(), defaults.maxStdinLength(), defaults.maxConcurrentRuns(),
+                defaults.maxInteractiveSessions(), defaults.maxConcurrentCompiles(), defaults.queueTimeout(), null);
+        ProcessExecutionService executor = new ProcessExecutionService(properties, new Sandbox(properties));
+        CodeRunner cpuLimited = new CodeRunner(CodeRunnerTest.COMPILER, executor,
+                new SandboxHealth(CodeRunnerTest.COMPILER, executor), properties);
+
+        RunResult result = cpuLimited.run("""
+                public class Main {
+                    public static void main(String[] args) {
+                        for (int i = 0; i < 8; i++) {
+                            new Thread(() -> { while (true) { } }).start();
+                        }
+                    }
                 }
-                """);
+                """, "");
 
         assertThat(result.status()).isEqualTo(RunStatus.TIMEOUT);
-        assertThat(result.runTimeMs()).isLessThan(3_500);
+        assertThat(result.runTimeMs()).isLessThan(7_000);
     }
 
     @Test
