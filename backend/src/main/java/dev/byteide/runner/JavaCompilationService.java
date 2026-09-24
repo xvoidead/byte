@@ -109,7 +109,8 @@ public class JavaCompilationService {
             copyResources(project, classesDir);
 
             keepDir = true;
-            return new CompilationResult(new CompiledProgram(classesDir, mainClass.get()), diagnostics, elapsedMs(start));
+            return new CompilationResult(new CompiledProgram(classesDir, mainClass.get(), project.usesPostgres()),
+                    diagnostics, elapsedMs(start));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } finally {

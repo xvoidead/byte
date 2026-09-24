@@ -19,7 +19,26 @@
 
     <properties>
         <java.version>21</java.version>
+        <!-- Библиотеки для программ учеников (см. sandbox-lib ниже). Версия драйвера MongoDB закреплена:
+             песочница подменяет его транспорт на соединение в памяти через внутренний API драйвера. -->
+        <mongodb.version>5.12.0</mongodb.version>
+        <sqlite4j.version>3.53.3.0</sqlite4j.version>
+        <pglite4j.version>0.0.3</pglite4j.version>
+        <mongo-java-server.version>1.47.0</mongo-java-server.version>
+        <paper-api.version>1.21.11-R0.1-SNAPSHOT</paper-api.version>
+        <mockbukkit.version>4.116.3</mockbukkit.version>
     </properties>
+
+    <repositories>
+        <!-- Paper API публикуется только в репозитории PaperMC -->
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -49,6 +68,83 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Библиотеки для программ учеников. Серверу они не нужны (scope provided — не попадают в byte.jar),
+             Maven копирует их в sandbox-lib/, откуда песочница подключает их к javac и дочерней JVM.
+             В пакетах dev.byteide.bridge лежат мосты к ним: базы данных в памяти вместо сети. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.roastedroot</groupId>
+            <artifactId>sqlite4j</artifactId>
+            <version>${sqlite4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.roastedroot</groupId>
+            <artifactId>pglite4j</artifactId>
+            <version>${pglite4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.bwaldvogel</groupId>
+            <artifactId>mongo-java-server-memory-backend</artifactId>
+            <version>${mongo-java-server.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paper-api.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <!-- Загрузка библиотек плагинов из интернета — в песочнице не нужна -->
+                <exclusion>
+                    <groupId>org.apache.maven</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.resolver</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <!-- Нужна MockBukkit; раньше приходила вместе с исключёнными библиотеками Maven -->
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockbukkit.mockbukkit</groupId>
+            <artifactId>mockbukkit-v1.21</artifactId>
+            <version>${mockbukkit.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <!-- Загрузка библиотек плагинов из интернета — в песочнице не нужна -->
+                <exclusion>
+                    <groupId>org.apache.maven</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.resolver</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
@@ -58,8 +154,35 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Мосты к библиотекам для программ учеников (src/bridge/java): базы данных в памяти вместо сети
+                 и исправления MockBukkit для SecurityManager. Компилируются в sandbox-bridge/, а не в classpath
+                 сервера: песочница подключает их к программам раньше самих библиотек. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sandbox-bridge</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/bridge/java</compileSourceRoot>
+                            </compileSourceRoots>
+                            <outputDirectory>${project.build.outputDirectory}/sandbox-bridge</outputDirectory>
+                            <compilerArgs>
+                                <arg>-Xlint:-removal</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Библиотеки, доступные программам учеников. Лежат отдельно от зависимостей сервера:
-                 сервер копирует их в песочницу и добавляет в classpath при компиляции и запуске. -->
+                 сервер копирует их в песочницу и добавляет в classpath при компиляции и запуске.
+                 copy-dependencies берёт всё со scope provided; библиотеки, которые нужны и самому серверу
+                 (у них scope compile), копируются вторым шагом по списку. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -68,20 +191,46 @@
                         <id>student-libraries</id>
                         <phase>generate-resources</phase>
                         <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>provided</includeScope>
+                            <outputDirectory>${project.build.outputDirectory}/sandbox-lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>student-libraries-shared</id>
+                        <phase>generate-resources</phase>
+                        <goals>
                             <goal>copy</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.outputDirectory}/sandbox-lib</outputDirectory>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>com.google.code.gson</groupId>
-                                    <artifactId>gson</artifactId>
-                                    <version>${gson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
                                     <groupId>org.yaml</groupId>
                                     <artifactId>snakeyaml</artifactId>
                                     <version>${snakeyaml.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.slf4j</groupId>
+                                    <artifactId>slf4j-api</artifactId>
+                                    <version>${slf4j.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.slf4j</groupId>
+                                    <artifactId>slf4j-nop</artifactId>
+                                    <version>${slf4j.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.logging.log4j</groupId>
+                                    <artifactId>log4j-api</artifactId>
+                                    <version>${log4j2.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jspecify</groupId>
+                                    <artifactId>jspecify</artifactId>
+                                    <version>1.0.0</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

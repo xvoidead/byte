@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 /**
  * Запускает скомпилированную программу в песочнице — отдельной JVM с SecurityManager
  * и ограничениями по памяти, потокам, времени, процессорному времени и объёму вывода.
+ * Программам с PostgreSQL внутри (PGlite) даётся больше памяти и времени, но работает их одновременно немного.
  */
 @Service
 public class ProcessExecutionService {
@@ -21,10 +23,13 @@ public class ProcessExecutionService {
     private final RunnerProperties properties;
     private final Sandbox sandbox;
     private final ExecutorService threads = Executors.newVirtualThreadPerTaskExecutor();
+    /** Тяжёлые программы (с PostgreSQL внутри) занимают сотни мегабайт — их одновременно запускается немного. */
+    private final Semaphore heavySlots;
 
     public ProcessExecutionService(RunnerProperties properties, Sandbox sandbox) {
         this.properties = properties;
         this.sandbox = sandbox;
+        this.heavySlots = new Semaphore(properties.maxConcurrentHeavyRuns(), true);
     }
 
     /** Обычный запуск: весь ввод передаётся сразу, результат — когда программа завершится. */
@@ -33,20 +38,29 @@ public class ProcessExecutionService {
     }
 
     public ExecutionResult execute(CompiledProgram program, ExecutionInput input) {
-        WorkDir workDir = WorkDir.create(input.workFiles());
-        RunningProgram running = start(program, workDir, properties.timeout(), RunningProgram.Listener.NONE,
-                workDir::close);
-        threads.submit(() -> {
-            if (!input.stdin().isEmpty()) {
-                running.write(input.stdin());
-            }
-            running.closeInput();
-        });
-        ExecutionResult result = await(running, properties.timeout().plusSeconds(10));
-        if (!running.sandboxReady() && result.exitCode() != null) {
-            throw new SandboxUnavailableException(result.stderr().strip());
+        if (program.heavy()) {
+            acquireHeavySlot(properties.queueTimeout());
         }
-        return result;
+        try {
+            Duration timeout = program.heavy() ? properties.heavyTimeout() : properties.timeout();
+            WorkDir workDir = WorkDir.create(input.workFiles());
+            RunningProgram running = start(program, workDir, timeout, RunningProgram.Listener.NONE, workDir::close);
+            threads.submit(() -> {
+                if (!input.stdin().isEmpty()) {
+                    running.write(input.stdin());
+                }
+                running.closeInput();
+            });
+            ExecutionResult result = await(running, timeout.plusSeconds(10));
+            if (!running.sandboxReady() && result.exitCode() != null) {
+                throw new SandboxUnavailableException(result.stderr().strip());
+            }
+            return result;
+        } finally {
+            if (program.heavy()) {
+                heavySlots.release();
+            }
+        }
     }
 
     /**
@@ -55,11 +69,37 @@ public class ProcessExecutionService {
      */
     public RunningProgram startInteractive(CompiledProgram program, List<ProjectFile> workFiles,
                                            RunningProgram.Listener listener) {
-        WorkDir workDir = WorkDir.create(workFiles);
-        return start(program, workDir, properties.interactiveTimeout(), listener, () -> {
-            workDir.close();
-            program.close();
-        });
+        if (program.heavy()) {
+            acquireHeavySlot(Duration.ZERO);
+        }
+        boolean started = false;
+        try {
+            WorkDir workDir = WorkDir.create(workFiles);
+            RunningProgram running = start(program, workDir, properties.interactiveTimeout(), listener, () -> {
+                workDir.close();
+                program.close();
+                if (program.heavy()) {
+                    heavySlots.release();
+                }
+            });
+            started = true;
+            return running;
+        } finally {
+            if (!started && program.heavy()) {
+                heavySlots.release();
+            }
+        }
+    }
+
+    private void acquireHeavySlot(Duration wait) {
+        try {
+            if (!heavySlots.tryAcquire(wait.toMillis(), TimeUnit.MILLISECONDS)) {
+                throw new RunnerBusyException();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RunnerBusyException();
+        }
     }
 
     private RunningProgram start(CompiledProgram program, WorkDir workDir, Duration wallTimeout,
@@ -69,7 +109,8 @@ public class ProcessExecutionService {
         Map<String, String> env = builder.environment();
         env.clear();
         env.put("LANG", "C.UTF-8");
-        RunningProgram.Limits limits = new RunningProgram.Limits(wallTimeout, properties.cpuLimit(),
+        Duration cpuLimit = program.heavy() ? properties.heavyCpuLimit() : properties.cpuLimit();
+        RunningProgram.Limits limits = new RunningProgram.Limits(wallTimeout, cpuLimit,
                 properties.maxOutputChars(), properties.maxWorkDirSizeKb() * 1024L, properties.maxWorkDirEntries());
         return RunningProgram.start(builder, workDir, limits, listener, threads, cleanup);
     }

@@ -42,6 +42,15 @@ public record Project(List<ProjectFile> files) {
         return files.stream().mapToInt(f -> f.content().length()).sum();
     }
 
+    /**
+     * Программа подключается к PostgreSQL. В песочнице это PGlite — настоящий PostgreSQL в WebAssembly внутри
+     * самой программы, и ему нужно гораздо больше памяти, чем обычной программе. Адрес подключения может лежать
+     * и в конфиге, поэтому смотрим все файлы проекта.
+     */
+    public boolean usesPostgres() {
+        return files.stream().anyMatch(f -> f.content().contains("jdbc:postgresql") || f.content().contains("org.postgresql"));
+    }
+
     /** Весь исходный код одной строкой — для поиска по нему (например, требований к решению). */
     public String allSources() {
         StringBuilder sb = new StringBuilder();

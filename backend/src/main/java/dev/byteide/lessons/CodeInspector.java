@@ -115,6 +115,7 @@ public class CodeInspector {
                 case "call" -> calls.stream().anyMatch(c -> callMatches(c, r.name()));
                 case "forbidCall" -> names(r).stream().noneMatch(name -> calls.stream().anyMatch(c -> callMatches(c, name)));
                 case "forbidLiteral" -> r.values().stream().noneMatch(this::containsLiteral);
+                case "literal" -> names(r).stream().allMatch(this::containsText);
                 case "recursion" -> recursive.contains(r.name());
                 case "class" -> classes.stream().anyMatch(c -> matchesClass(c, r));
                 case "privateField" -> fields.stream()
@@ -139,6 +140,16 @@ public class CodeInspector {
 
         private static List<String> names(Requirement r) {
             return r.name() != null ? List.of(r.name()) : r.values();
+        }
+
+        /** Строка (обычно SQL-запрос) содержит фрагмент — без учёта регистра и лишних пробелов. */
+        private boolean containsText(String fragment) {
+            String expected = squeeze(fragment);
+            return strings.stream().anyMatch(s -> squeeze(s).contains(expected));
+        }
+
+        private static String squeeze(String text) {
+            return text.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ");
         }
 
         /** Число запрещено и как литерал, и внутри строки ("Площадь: 21"), если оно не часть другого числа. */

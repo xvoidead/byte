@@ -80,4 +80,24 @@ class CodeInspectorTest {
         assertThat(check(source, point)).isTrue();
         assertThat(check(source, field)).isTrue();
     }
+
+    @Test
+    void findsSqlFragmentsInStringsIgnoringCaseAndSpaces() {
+        String source = """
+                class Main {
+                    static final String UPSERT = \"\"\"
+                            INSERT INTO items (name, qty) VALUES (?, ?)
+                            on   conflict (name)
+                            DO UPDATE SET qty = items.qty + EXCLUDED.qty
+                            RETURNING qty
+                            \"\"\";
+                }
+                """;
+        Requirement both = new Requirement("literal", null, null, null, List.of("ON CONFLICT (name)", "returning"),
+                null, null, null, null, null, "m");
+        Requirement missing = new Requirement("literal", "GROUP BY", null, null, null, null, null, null, null, null, "m");
+
+        assertThat(check(source, both)).isTrue();
+        assertThat(check(source, missing)).isFalse();
+    }
 }

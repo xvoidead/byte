@@ -25,6 +25,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param maxWorkDirSizeKb       сколько всего данных может лежать в рабочей папке программы
  * @param maxWorkDirEntries      сколько файлов и папок может быть в рабочей папке
  * @param javaHome               JDK/JRE, которым запускаются программы; по умолчанию — текущий
+ * @param heavyMemoryMb          размер кучи «тяжёлой» программы — той, что запускает PostgreSQL внутри себя
+ *                               (PGlite — настоящий PostgreSQL в WebAssembly, ему нужно около 600 МБ)
+ * @param heavyTimeout           максимальное время работы тяжёлой программы при обычном запуске и проверке
+ * @param heavyCpuLimit          максимальное процессорное время тяжёлой программы
+ * @param maxConcurrentHeavyRuns сколько тяжёлых программ может работать одновременно (вместе с консолью)
  */
 @ConfigurationProperties("byte.runner")
 public record RunnerProperties(
@@ -43,7 +48,11 @@ public record RunnerProperties(
         @DefaultValue("2048") int maxFileSizeKb,
         @DefaultValue("4096") int maxWorkDirSizeKb,
         @DefaultValue("100") int maxWorkDirEntries,
-        Path javaHome) {
+        Path javaHome,
+        @DefaultValue("640") int heavyMemoryMb,
+        @DefaultValue("15s") Duration heavyTimeout,
+        @DefaultValue("15s") Duration heavyCpuLimit,
+        @DefaultValue("1") int maxConcurrentHeavyRuns) {
 
     public Path javaExecutable() {
         Path home = javaHome != null ? javaHome : Path.of(System.getProperty("java.home"));
@@ -53,6 +62,7 @@ public record RunnerProperties(
     /** Настройки по умолчанию — для тестов и инструментов вне Spring. */
     public static RunnerProperties defaults() {
         return new RunnerProperties(Duration.ofSeconds(5), Duration.ofSeconds(5), Duration.ofMinutes(2), 128, 32,
-                65536, 50_000, 100_000, 4, 8, 4, Duration.ofSeconds(10), 2048, 4096, 100, null);
+                65536, 50_000, 100_000, 4, 8, 4, Duration.ofSeconds(10), 2048, 4096, 100, null,
+                640, Duration.ofSeconds(15), Duration.ofSeconds(15), 1);
     }
 }

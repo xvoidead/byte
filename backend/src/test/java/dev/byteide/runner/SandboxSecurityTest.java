@@ -63,6 +63,13 @@ class SandboxSecurityTest {
             "Class.forName(\"sun.misc.Unsafe\");",
             "Class.forName(\"jdk.internal.misc.Unsafe\");",
             "new URLClassLoader(new URL[0]);",
+            // Базы данных работают внутри программы, а не по сети: сокеты к их «портам» тоже закрыты.
+            "new Socket(\"localhost\", 5432).close();",
+            "new Socket(\"localhost\", 27017).close();",
+            "System.out.println(System.getProperty(\"user.name\"));",
+            "Main.class.getProtectionDomain();",
+            // Права MockBukkit на создание загрузчиков классов не достаются ученику.
+            "new org.mockbukkit.mockbukkit.plugin.MockBukkitConfiguredPluginClassLoader(null, null, null, null);",
     })
     void blocksDangerousOperations(String body) {
         RunResult result = run(body);
@@ -114,7 +121,9 @@ class SandboxSecurityTest {
                 defaults.interactiveTimeout(), defaults.maxMemoryMb(), defaults.maxThreads(), defaults.maxOutputChars(),
                 defaults.maxSourceLength(), defaults.maxStdinLength(), defaults.maxConcurrentRuns(),
                 defaults.maxInteractiveSessions(), defaults.maxConcurrentCompiles(), defaults.queueTimeout(),
-                defaults.maxFileSizeKb(), defaults.maxWorkDirSizeKb(), defaults.maxWorkDirEntries(), null);
+                defaults.maxFileSizeKb(), defaults.maxWorkDirSizeKb(), defaults.maxWorkDirEntries(), null,
+                defaults.heavyMemoryMb(), defaults.heavyTimeout(), defaults.heavyCpuLimit(),
+                defaults.maxConcurrentHeavyRuns());
         ProcessExecutionService executor = new ProcessExecutionService(properties, new Sandbox(properties));
         CodeRunner cpuLimited = new CodeRunner(CodeRunnerTest.COMPILER, executor,
                 new SandboxHealth(CodeRunnerTest.COMPILER, executor), properties);

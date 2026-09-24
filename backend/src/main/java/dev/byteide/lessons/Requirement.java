@@ -13,6 +13,8 @@ import java.util.List;
  *   <li>{@code call} — вызывается метод {@code name}; {@code forbidCall} — не вызывается метод {@code name}
  *       или ни один из {@code values} (имя можно указать с классом: {@code Arrays.sort});</li>
  *   <li>{@code forbidLiteral} — в коде нет литералов из {@code values} (готовых ответов);</li>
+ *   <li>{@code literal} — в строках кода есть каждый из фрагментов {@code values} (или {@code name}) без учёта
+ *       регистра и лишних пробелов: так уроки о базах данных требуют конструкции SQL, например {@code ON CONFLICT};</li>
  *   <li>{@code recursion} — метод {@code name} вызывает сам себя;</li>
  *   <li>{@code class} — объявлен класс {@code name}, при необходимости с {@code superclass}
  *       и {@code interfaceName}; {@code kind} — class, interface, enum или record;</li>

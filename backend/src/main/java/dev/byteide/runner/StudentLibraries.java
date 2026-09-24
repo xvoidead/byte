@@ -14,17 +14,25 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * Библиотеки, которыми могут пользоваться программы учеников (Gson, SnakeYAML).
- * Maven кладёт их в {@code classpath:sandbox-lib/}; при старте они копируются во временный каталог,
- * потому что javac и дочерней JVM нужны обычные файлы, а не записи внутри jar сервера.
+ * Библиотеки, которыми могут пользоваться программы учеников: Gson, SnakeYAML, JDBC-драйверы SQLite и PostgreSQL,
+ * драйвер MongoDB, Paper API и MockBukkit. Maven кладёт их в {@code classpath:sandbox-lib/}, а мосты к ним
+ * (src/bridge) — в {@code classpath:sandbox-bridge/}. При старте всё копируется во временный каталог, потому что
+ * javac и дочерней JVM нужны обычные файлы, а не записи внутри jar сервера.
+ *
+ * <p>Каталог мостов стоит в classpath первым: его классы заменяют одноимённые классы библиотек
+ * (например, {@code MongoClients} подключается к MongoDB в памяти, а не по сети).
  */
 public final class StudentLibraries {
 
+    static final String BRIDGE_DIR = "bridge";
+
     private static volatile StudentLibraries shared;
 
+    private final Path root;
     private final List<Path> jars;
 
-    private StudentLibraries(List<Path> jars) {
+    private StudentLibraries(Path root, List<Path> jars) {
+        this.root = root;
         this.jars = List.copyOf(jars);
     }
 
@@ -43,27 +51,57 @@ public final class StudentLibraries {
         return result;
     }
 
+    /** Classpath программ: каталог мостов, затем jar-файлы библиотек по алфавиту. */
     public List<Path> jars() {
         return jars;
+    }
+
+    /** Каталог, в котором лежат все библиотеки и мосты. */
+    public Path root() {
+        return root;
     }
 
     private static StudentLibraries load() {
         try {
             Path dir = Files.createTempDirectory("byte-libs-");
             Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteQuietly(dir)));
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             List<Path> jars = new ArrayList<>();
-            Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath*:sandbox-lib/*.jar");
-            for (Resource resource : resources) {
+            for (Resource resource : resolver.getResources("classpath*:sandbox-lib/*.jar")) {
                 Path target = dir.resolve(resource.getFilename());
-                try (InputStream in = resource.getInputStream()) {
-                    Files.copy(in, target);
-                }
+                copy(resource, target);
                 jars.add(target);
             }
             jars.sort(Comparator.naturalOrder());
-            return new StudentLibraries(jars);
+
+            Path bridge = dir.resolve(BRIDGE_DIR);
+            int copied = 0;
+            for (Resource resource : resolver.getResources("classpath*:sandbox-bridge/**")) {
+                String url = resource.getURL().toString();
+                String name = url.substring(url.lastIndexOf("sandbox-bridge/") + "sandbox-bridge/".length());
+                if (name.isEmpty() || name.endsWith("/") || !resource.isReadable()) {
+                    continue;
+                }
+                Path target = bridge.resolve(name).normalize();
+                if (!target.startsWith(bridge)) {
+                    continue;
+                }
+                Files.createDirectories(target.getParent());
+                copy(resource, target);
+                copied++;
+            }
+            if (copied > 0) {
+                jars.addFirst(bridge);
+            }
+            return new StudentLibraries(dir, jars);
         } catch (IOException e) {
             throw new UncheckedIOException("Не удалось подготовить библиотеки для программ", e);
+        }
+    }
+
+    private static void copy(Resource resource, Path target) throws IOException {
+        try (InputStream in = resource.getInputStream()) {
+            Files.copy(in, target);
         }
     }
 
