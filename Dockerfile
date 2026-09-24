@@ -22,7 +22,11 @@ FROM eclipse-temurin:21-jdk
 RUN useradd --system --uid 10001 --home-dir /app byte
 WORKDIR /app
 COPY --from=backend /app/target/byte.jar app.jar
+# Анонимная статистика хранится в файле H2 в этом каталоге — подключите том, чтобы она переживала обновления.
+RUN mkdir /app/data && chown byte /app/data
+VOLUME /app/data
 USER byte
-ENV JAVA_OPTS="-Xmx512m -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_OPTS="-Xmx512m -XX:+ExitOnOutOfMemoryError" \
+    BYTE_ANALYTICS_DB="file:/app/data/analytics"
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
