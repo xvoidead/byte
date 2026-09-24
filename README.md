@@ -88,14 +88,21 @@ cd e2e && npm install && npx playwright install chromium && npx playwright test
 
 ```bash
 docker build -t byte .
+
+# Токен для страницы /stats: придумайте сами или сгенерируйте и сохраните в менеджере паролей
+BYTE_ADMIN_TOKEN=$(openssl rand -hex 24)
+echo "Токен статистики: $BYTE_ADMIN_TOKEN"
+
 docker run -d --name byte -p 8080:8080 \
   -v byte-data:/app/data \
   -e BYTE_BASE_URL=https://example.com \
   -e BYTE_CONTACT_EMAIL=hello@example.com \
-  -e BYTE_ADMIN_TOKEN="$(openssl rand -hex 24)" \
+  -e BYTE_ADMIN_TOKEN="$BYTE_ADMIN_TOKEN" \
   -e SERVER_FORWARD_HEADERS_STRATEGY=native \
   byte
 ```
+
+Сервер нигде не показывает токен — это пароль, который вы задаёте сами. Если забыли его, посмотрите в контейнере: `docker exec byte printenv BYTE_ADMIN_TOKEN`; чтобы сменить, перезапустите контейнер с новым значением.
 
 Образ собирает фронтенд, кладёт его в статику Spring Boot и запускает всё одним процессом от непривилегированного пользователя. Перед сервером поставьте обратный прокси с HTTPS (Caddy, nginx) — и не забудьте, что он должен пропускать WebSocket на `/api/console`.
 
