@@ -1,6 +1,7 @@
 package dev.byteide.web;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +18,10 @@ import dev.byteide.lessons.CheckResult;
 import dev.byteide.lessons.Lesson;
 import dev.byteide.lessons.LessonRepository;
 import dev.byteide.lessons.Requirement;
-import dev.byteide.lessons.Step;
 import dev.byteide.lessons.SolutionChecker;
+import dev.byteide.lessons.Step;
+import dev.byteide.runner.Project;
+import dev.byteide.runner.ProjectFile;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -53,11 +56,12 @@ public class LessonController {
         String next = index < all.size() - 1 ? all.get(index + 1).slug() : null;
         List<Example> examples = lesson.tests().stream()
                 .filter(t -> !t.hidden())
-                .map(t -> new Example(t.name(), t.stdin(), t.expectedOutput()))
+                .map(t -> new Example(t.name(), t.stdin(), t.expectedOutput(), t.files(), t.expectedFiles()))
                 .toList();
         int randomCount = lesson.random() == null ? 0 : lesson.random().count();
         return new LessonDetails(lesson.slug(), lesson.order(), lesson.module(), lesson.title(), lesson.summary(),
-                lesson.steps(), lesson.task(), lesson.starterCode(), examples, lesson.tests().size() + randomCount,
+                lesson.steps(), lesson.task(), lesson.starterCode(), lesson.starter().files(), examples,
+                lesson.tests().size() + randomCount,
                 lesson.hints(), lesson.requirements().stream().map(Requirement::message).toList(), prev, next);
     }
 
@@ -67,13 +71,17 @@ public class LessonController {
      */
     @GetMapping("/{slug}/solution")
     public Solution solution(@PathVariable String slug) {
-        return new Solution(find(slug).solution());
+        Lesson lesson = find(slug);
+        String main = lesson.solution().sources().stream().filter(f -> f.name().equals(Project.MAIN_FILE))
+                .findFirst().or(() -> lesson.solution().sources().stream().findFirst())
+                .map(ProjectFile::content).orElse("");
+        return new Solution(main, lesson.solution().files());
     }
 
     @PostMapping("/{slug}/check")
     public CheckResult check(@PathVariable String slug, @RequestBody CheckRequest request, HttpServletRequest http) {
-        limits.checkSource(request.code());
-        CheckResult result = checker.check(find(slug), request.code());
+        Project project = limits.project(request.code(), request.files());
+        CheckResult result = checker.check(find(slug), project);
         log.info("check lesson={} passed={} compiled={} ip={}", slug, result.passed(), result.compiled(),
                 ClientIp.masked(ClientIp.of(http)));
         return result;
@@ -96,6 +104,7 @@ public class LessonController {
             List<Step> steps,
             String task,
             String starterCode,
+            List<ProjectFile> starterFiles,
             List<Example> examples,
             int testCount,
             List<String> hints,
@@ -104,12 +113,15 @@ public class LessonController {
             String next) {
     }
 
-    public record Solution(String code) {
+    /** {@code code} — главный файл решения (для старых клиентов), {@code files} — весь проект. */
+    public record Solution(String code, List<ProjectFile> files) {
     }
 
-    public record Example(String name, String stdin, String expectedOutput) {
+    /** Открытый тест; {@code files}/{@code expectedFiles} — файлы до и после запуска, если тест их задаёт. */
+    public record Example(String name, String stdin, String expectedOutput, Map<String, String> files,
+                          Map<String, String> expectedFiles) {
     }
 
-    public record CheckRequest(String code) {
+    public record CheckRequest(String code, List<ProjectFile> files) {
     }
 }

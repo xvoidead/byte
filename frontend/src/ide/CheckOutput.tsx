@@ -7,7 +7,7 @@ export function CheckOutput({
   onDiagnosticClick,
 }: {
   result: CheckResult;
-  onDiagnosticClick: (line: number, column: number) => void;
+  onDiagnosticClick: (line: number, column: number, file?: string | null) => void;
 }) {
   if (!result.compiled) {
     return (
@@ -68,8 +68,29 @@ function TestItem({ test, index }: { test: TestOutcome; index: number }) {
           {test.stdin ? (
             <Block title="Ввод" text={test.stdin} />
           ) : null}
-          <Block title="Ожидалось" text={test.expectedOutput ?? ''} />
-          <Block title="Получено" text={test.actualOutput ?? ''} />
+          {test.expectedOutput !== null && (
+            <>
+              <Block title="Ожидалось" text={test.expectedOutput} />
+              <Block title="Получено" text={test.actualOutput ?? ''} />
+            </>
+          )}
+          {test.files
+            ?.filter((f) => !f.passed)
+            .map((f) => (
+              <div key={f.name} className="test-file">
+                <Block title={`Файл ${f.name}: ожидалось`} text={f.expected} />
+                {f.actual === null ? (
+                  <div className="test-block">
+                    <div className="test-block-title">Файл {f.name}: получено</div>
+                    <pre>
+                      <em className="muted">(файла нет)</em>
+                    </pre>
+                  </div>
+                ) : (
+                  <Block title={`Файл ${f.name}: получено`} text={f.actual} />
+                )}
+              </div>
+            ))}
           {test.stderr && <Block title="Ошибки" text={test.stderr} error />}
         </div>
       )}

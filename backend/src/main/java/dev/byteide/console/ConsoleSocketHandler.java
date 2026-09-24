@@ -1,6 +1,7 @@
 package dev.byteide.console;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import dev.byteide.runner.CodeRunner;
 import dev.byteide.runner.Diagnostic;
 import dev.byteide.runner.ExecutionResult;
+import dev.byteide.runner.Project;
+import dev.byteide.runner.ProjectFile;
 import dev.byteide.runner.RunnerBusyException;
 import dev.byteide.runner.RunnerProperties;
 import dev.byteide.runner.RunningProgram;
@@ -116,7 +119,7 @@ public class ConsoleSocketHandler extends TextWebSocketHandler {
         }
         String type = node.path("type").asString("");
         switch (type) {
-            case "run" -> run(session, node.path("code").asString(""));
+            case "run" -> run(session, project(node));
             case "input" -> input(session, node.path("data").asString(""));
             case "eof" -> {
                 RunningProgram running = session.program;
@@ -129,13 +132,34 @@ public class ConsoleSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void run(Session session, String code) {
-        if (code.isBlank()) {
-            session.send(error("Код программы пуст."));
-            return;
+    /** Проект из сообщения: {@code files} — список файлов, {@code code} — один Main.java от старых клиентов. */
+    private Object project(JsonNode node) {
+        JsonNode files = node.path("files");
+        if (!files.isArray() || files.isEmpty()) {
+            String code = node.path("code").asString("");
+            if (code.isBlank()) {
+                return "Код программы пуст.";
+            }
+            if (code.length() > properties.maxSourceLength()) {
+                return "Код слишком длинный: максимум " + properties.maxSourceLength() + " символов.";
+            }
+            return Project.single(code);
         }
-        if (code.length() > properties.maxSourceLength()) {
-            session.send(error("Код слишком длинный: максимум " + properties.maxSourceLength() + " символов."));
+        if (files.size() > Project.MAX_FILES) {
+            return "Слишком много файлов: максимум " + Project.MAX_FILES + ".";
+        }
+        List<ProjectFile> list = new ArrayList<>();
+        for (JsonNode file : files) {
+            list.add(new ProjectFile(file.path("name").asString(""), file.path("content").asString("")));
+        }
+        Project project = new Project(list);
+        String problem = project.problem(properties.maxSourceLength());
+        return problem != null ? problem : project;
+    }
+
+    private void run(Session session, Object request) {
+        if (!(request instanceof Project project)) {
+            session.send(error((String) request));
             return;
         }
         session.stopProgram();
@@ -151,7 +175,7 @@ public class ConsoleSocketHandler extends TextWebSocketHandler {
         boolean handedOver = false;
         try {
             session.inputChars.set(0);
-            CodeRunner.Interactive result = runner.startInteractive(code, new RunningProgram.Listener() {
+            CodeRunner.Interactive result = runner.startInteractive(project, new RunningProgram.Listener() {
                 @Override
                 public void onOutput(RunningProgram.Stream stream, String text) {
                     session.send(Map.of("type", "out",
@@ -167,6 +191,7 @@ public class ConsoleSocketHandler extends TextWebSocketHandler {
                     exit.put("status", execution.status());
                     exit.put("exitCode", execution.exitCode());
                     exit.put("timeMs", execution.timeMs());
+                    exit.put("files", execution.files());
                     session.send(exit);
                     log.info("console status={} run={}ms ip={}", execution.status(), execution.timeMs(),
                             ClientIp.masked(session.ip));

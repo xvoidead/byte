@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class CodeRunnerTest {
 
     static final RunnerProperties PROPERTIES = new RunnerProperties(Duration.ofSeconds(3), Duration.ofSeconds(3),
-            Duration.ofSeconds(20), 64, 16, 1024, 50_000, 100_000, 2, 2, 2, Duration.ofSeconds(10), null);
+            Duration.ofSeconds(20), 64, 16, 1024, 50_000, 100_000, 2, 2, 2, Duration.ofSeconds(10), 2048, 4096, 100, null);
     static final JavaCompilationService COMPILER = new JavaCompilationService();
     static final ProcessExecutionService EXECUTOR = new ProcessExecutionService(PROPERTIES, new Sandbox(PROPERTIES));
     static final SandboxHealth HEALTH = new SandboxHealth(COMPILER, EXECUTOR);

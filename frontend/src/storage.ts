@@ -1,3 +1,5 @@
+import type { ProjectFile } from './types';
+
 // Прогресс и черновики хранятся только в браузере ученика.
 // localStorage может быть недоступен (приватный режим, запрет cookies) — тогда просто работаем без сохранения.
 
@@ -26,6 +28,53 @@ export function loadCode(key: string): string | null {
 
 export function saveCode(key: string, code: string | null): void {
   write(`code:${key}`, code);
+}
+
+/** Черновик проекта: файлы и открытая вкладка. */
+export interface StoredProject {
+  files: ProjectFile[];
+  active: string;
+}
+
+function isFileList(value: unknown): value is ProjectFile[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((f) => f && typeof f.name === 'string' && typeof f.content === 'string')
+  );
+}
+
+/**
+ * Черновик проекта или null. Старый черновик из одного файла (byte:code:…) переносится в Main.java:
+ * так сохраняются черновики, сделанные до появления вкладок.
+ */
+export function loadProject(key: string, initial: ProjectFile[]): StoredProject | null {
+  let project: StoredProject | null = null;
+  try {
+    const parsed = JSON.parse(read(`project:${key}`) ?? 'null');
+    if (parsed && isFileList(parsed.files)) {
+      const active = typeof parsed.active === 'string' ? parsed.active : parsed.files[0].name;
+      project = { files: parsed.files, active };
+    }
+  } catch {
+    project = null;
+  }
+  const legacy = read(`code:${key}`);
+  if (legacy !== null) {
+    const base = project?.files ?? initial;
+    const hasMain = base.some((f) => f.name === 'Main.java');
+    const files = hasMain
+      ? base.map((f) => (f.name === 'Main.java' ? { ...f, content: legacy } : f))
+      : [{ name: 'Main.java', content: legacy }, ...base];
+    project = { files, active: 'Main.java' };
+    write(`code:${key}`, null);
+    saveProject(key, project);
+  }
+  return project;
+}
+
+export function saveProject(key: string, project: StoredProject | null): void {
+  write(`project:${key}`, project ? JSON.stringify(project) : null);
 }
 
 /** Прохождение урока: где остановился ученик, ответы на вопросы, открытые подсказки. */

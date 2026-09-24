@@ -1,11 +1,13 @@
 import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
+import JsonWorker from 'monaco-editor/language/json/json.worker?worker';
 import { loader } from '@monaco-editor/react';
 import { registerJavaCompletions } from './javaCompletions';
 
 // Monaco подключается из node_modules, а не с CDN: сайт работает без внешних запросов.
+// Отдельный поток для JSON — он проверяет синтаксис файлов вроде players.json.
 self.MonacoEnvironment = {
-  getWorker: () => new EditorWorker(),
+  getWorker: (_id: string, label: string) => (label === 'json' ? new JsonWorker() : new EditorWorker()),
 };
 
 loader.config({ monaco });

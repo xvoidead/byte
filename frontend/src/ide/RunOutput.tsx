@@ -7,6 +7,7 @@ const STATUS_TEXT: Record<RunStatus, string> = {
   TIMEOUT: 'Превышено время выполнения',
   OUTPUT_LIMIT: 'Программа вывела слишком много текста',
   STOPPED: 'Программа остановлена',
+  FILES_LIMIT: 'Программа записала слишком много файлов',
 };
 
 export function statusText(status: RunStatus): string {
@@ -18,14 +19,14 @@ export function DiagnosticList({
   onClick,
 }: {
   diagnostics: Diagnostic[];
-  onClick: (line: number, column: number) => void;
+  onClick: (line: number, column: number, file?: string | null) => void;
 }) {
   return (
     <ul className="diagnostics">
       {diagnostics.map((d, i) => (
         <li key={i} className={`diagnostic ${d.severity.toLowerCase()}`}>
-          <button className="diagnostic-pos" onClick={() => onClick(d.line, d.column)} disabled={d.line <= 0}>
-            {d.line > 0 ? `строка ${d.line}` : 'программа'}
+          <button className="diagnostic-pos" onClick={() => onClick(d.line, d.column, d.file)} disabled={d.line <= 0}>
+            {d.line <= 0 ? 'программа' : d.file && d.file !== 'Main.java' ? `${d.file}:${d.line}` : `строка ${d.line}`}
           </button>
           <div>
             <code className="diagnostic-message">{d.message}</code>
@@ -48,7 +49,9 @@ const RUNTIME_HINTS: [RegExp, string][] = [
   [/StackOverflowError/, 'Слишком глубокая рекурсия — вероятно, метод вызывает сам себя бесконечно.'],
   [/OutOfMemoryError/, 'Программе не хватило памяти.'],
   [/Слишком много потоков/, 'Программа создаёт слишком много потоков — в песочнице их число ограничено.'],
-  [/AccessControlException|SecurityException/, 'Эта операция запрещена в песочнице: программы не могут работать с файлами, сетью, процессами и переменными окружения.'],
+  [/FilePermission/, 'Программа может читать и писать файлы только в своей папке — используйте относительные пути вроде "config.yml" или "data/save.json".'],
+  [/File too large/, 'Файл получился слишком большим: один файл может занимать до 2 МБ.'],
+  [/AccessControlException|SecurityException/, 'Эта операция запрещена в песочнице: программы не могут работать с сетью, процессами, переменными окружения и файлами за пределами своей папки.'],
 ];
 
 export function runtimeHint(stderr: string): string | undefined {

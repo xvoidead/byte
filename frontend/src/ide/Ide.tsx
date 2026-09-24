@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import { monaco } from './monaco';
 import { api, ApiError } from '../api';
-import { loadCode, saveCode } from '../storage';
-import type { CheckResult, Diagnostic } from '../types';
+import { loadProject, saveProject, type StoredProject } from '../storage';
+import type { CheckResult, Diagnostic, OutputFile, ProjectFile } from '../types';
 import { CheckOutput } from './CheckOutput';
+import { FileTabs } from './FileTabs';
+import { applyOutputFiles, isSource, languageOf, MAIN_FILE, newFileContent, sortFiles, type FileChanges } from './project';
 import { ConsoleSocket, type ConsoleEvent } from './consoleSocket';
 import { appendSegment, EMPTY_TERMINAL, Terminal, type SegmentKind, type TerminalState } from './Terminal';
 import { Mascot, type MascotMood } from '../components/Mascot';
@@ -14,7 +16,8 @@ type Tab = 'console' | 'tests';
 export interface IdeProps {
   /** Ключ для сохранения черновика в браузере. */
   storageKey: string;
-  initialCode: string;
+  /** Стартовый проект: один Main.java или несколько файлов. */
+  initialFiles: ProjectFile[];
   /** Если задан, доступна кнопка «Проверить». */
   lessonSlug?: string;
   onPassed?: () => void;
@@ -34,8 +37,20 @@ type MonacoEditor = Parameters<OnMount>[0];
 const LIVE_DELAY_MS = 700;
 const MAX_LIVE_SOURCE = 50_000;
 
-export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onChecked, onRun }: IdeProps) {
-  const [code, setCode] = useState(() => loadCode(storageKey) ?? initialCode);
+function initialProject(files: ProjectFile[]): StoredProject {
+  const sorted = sortFiles(files);
+  return { files: sorted, active: sorted.find((f) => isSource(f.name))?.name ?? sorted[0]?.name ?? MAIN_FILE };
+}
+
+const sameFiles = (a: ProjectFile[], b: ProjectFile[]) =>
+  a.length === b.length && a.every((f) => b.some((g) => g.name === f.name && g.content === f.content));
+
+export default function Ide({ storageKey, initialFiles, lessonSlug, onPassed, onChecked, onRun }: IdeProps) {
+  const [project, setProjectState] = useState<StoredProject>(
+    () => loadProject(storageKey, initialFiles) ?? initialProject(initialFiles),
+  );
+  const { files, active } = project;
+  const activeFile = files.find((f) => f.name === active) ?? files[0];
   const [tab, setTab] = useState<Tab>('console');
   const [terminal, setTerminal] = useState<TerminalState>(EMPTY_TERMINAL);
   const [checking, setChecking] = useState(false);
@@ -45,6 +60,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
   const [reaction, setReaction] = useState<{ mood: MascotMood; key: number }>({ mood: 'idle', key: 0 });
   const editorRef = useRef<MonacoEditor | null>(null);
+  const pendingReveal = useRef<{ line: number; column: number } | null>(null);
   const socketRef = useRef<ConsoleSocket | null>(null);
   const markersRef = useRef<Diagnostic[]>([]);
   const compileTimeRef = useRef(0);
@@ -55,25 +71,71 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
 
   const setMood = useCallback((mood: MascotMood) => setReaction((r) => ({ mood, key: r.key + 1 })), []);
 
-  const showDiagnostics = useCallback((diagnostics: Diagnostic[]) => {
-    markersRef.current = diagnostics;
-    const model = editorRef.current?.getModel();
-    if (!model) return;
-    monaco.editor.setModelMarkers(
-      model,
-      'javac',
-      diagnostics
-        .filter((d) => d.line > 0)
-        .map((d) => ({
-          severity: d.severity === 'ERROR' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
-          startLineNumber: d.line,
-          endLineNumber: d.line,
-          startColumn: Math.max(1, d.column),
-          endColumn: Math.max(d.column + 1, d.endColumn),
-          message: d.hint ? `${d.message}\n\nПодсказка: ${d.hint}` : d.message,
-        })),
-    );
-  }, []);
+  /** Каждый файл — отдельная модель Monaco со своей историей правок; адрес уникален для страницы. */
+  const modelPath = useCallback((name: string) => `file:///${storageKey.replace(/[^\w-]/g, '_')}/${name}`, [storageKey]);
+
+  const setProject = useCallback(
+    (update: (p: StoredProject) => StoredProject) =>
+      setProjectState((p) => {
+        const next = update(p);
+        saveProject(storageKey, sameFiles(next.files, initialFiles) ? null : next);
+        return next;
+      }),
+    [initialFiles, storageKey],
+  );
+
+  /** Подчёркивает ошибки в каждом открытом файле. Сообщения без файла относятся к проекту целиком. */
+  const applyMarkers = useCallback(() => {
+    const diagnostics = markersRef.current;
+    for (const model of monaco.editor.getModels()) {
+      const uri = model.uri.toString();
+      const prefix = modelPath('');
+      if (!uri.startsWith(prefix)) continue;
+      const name = decodeURIComponent(uri.slice(prefix.length));
+      monaco.editor.setModelMarkers(
+        model,
+        'javac',
+        diagnostics
+          .filter((d) => d.line > 0 && (d.file ?? MAIN_FILE) === name)
+          .map((d) => ({
+            severity: d.severity === 'ERROR' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+            startLineNumber: d.line,
+            endLineNumber: d.line,
+            startColumn: Math.max(1, d.column),
+            endColumn: Math.max(d.column + 1, d.endColumn),
+            message: d.hint ? `${d.message}\n\nПодсказка: ${d.hint}` : d.message,
+          })),
+      );
+    }
+  }, [modelPath]);
+
+  const showDiagnostics = useCallback(
+    (diagnostics: Diagnostic[]) => {
+      markersRef.current = diagnostics;
+      applyMarkers();
+    },
+    [applyMarkers],
+  );
+
+  // Актуальный проект для обработчиков событий консоли, которые живут дольше одного рендера.
+  const projectRef = useRef(project);
+  projectRef.current = project;
+
+  /** Что программа сделала с файлами рабочей папки — переносим в проект, как на настоящем диске. */
+  const syncOutputFiles = useCallback(
+    (outputs: OutputFile[] | undefined): FileChanges | null => {
+      if (!outputs) return null;
+      const current = projectRef.current;
+      const result = applyOutputFiles(current.files, outputs);
+      const { created, changed, deleted, binary } = result.changes;
+      if (created.length + changed.length + deleted.length > 0) {
+        const active = result.files.some((f) => f.name === current.active) ? current.active : result.files[0].name;
+        setProject(() => ({ files: result.files, active }));
+      }
+      return created.length + changed.length + deleted.length + binary.length > 0 ? result.changes : null;
+    },
+    [setProject],
+  );
 
   // Вывод программы приходит частями; склеиваем их и обновляем экран не чаще раза за кадр.
   const flushOutput = useCallback(() => {
@@ -121,23 +183,31 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
         case 'out':
           queueOutput(event.stream, event.data);
           break;
-        case 'exit':
+        case 'exit': {
           flushOutput();
+          const fileChanges = event.status === 'FILES_LIMIT' ? null : syncOutputFiles(event.files);
           setTerminal((t) => ({
             ...t,
             phase: 'done',
-            exit: { ...event, compileTimeMs: compileTimeRef.current },
+            exit: {
+              status: event.status,
+              exitCode: event.exitCode,
+              timeMs: event.timeMs,
+              compileTimeMs: compileTimeRef.current,
+            },
+            fileChanges,
           }));
           setMood(event.status === 'SUCCESS' || event.status === 'STOPPED' ? 'idle' : 'sad');
           callbacks.current.onRun?.(event.status, null);
           break;
+        }
         case 'error':
           flushOutput();
           setTerminal((t) => ({ ...t, phase: 'done', error: event.message }));
           break;
       }
     },
-    [flushOutput, queueOutput, setMood, showDiagnostics],
+    [flushOutput, queueOutput, setMood, showDiagnostics, syncOutputFiles],
   );
 
   const socket = useCallback(() => {
@@ -158,7 +228,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
   /** Запуск без интерактивной консоли — если WebSocket недоступен (например, его режет прокси). */
   const runWithoutConsole = useCallback(async () => {
     try {
-      const result = await api.run(code, '');
+      const result = await api.run(files, '');
       showDiagnostics(result.diagnostics);
       if (result.status === 'COMPILATION_ERROR') {
         setTerminal({
@@ -169,6 +239,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
       } else {
         let segments = appendSegment([], 'stdout', result.stdout);
         segments = appendSegment(segments, 'stderr', result.stderr);
+        const fileChanges = result.status === 'FILES_LIMIT' ? null : syncOutputFiles(result.files);
         setTerminal({
           ...EMPTY_TERMINAL,
           phase: 'done',
@@ -180,6 +251,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
             timeMs: result.runTimeMs,
             compileTimeMs: result.compileTimeMs,
           },
+          fileChanges,
         });
       }
       setMood(result.status === 'SUCCESS' ? 'idle' : 'sad');
@@ -191,18 +263,18 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
         error: e instanceof ApiError ? e.message : 'Не удалось выполнить программу.',
       });
     }
-  }, [code, setMood, showDiagnostics]);
+  }, [files, setMood, showDiagnostics, syncOutputFiles]);
 
   const run = useCallback(async () => {
     setTab('console');
     pendingOutput.current = [];
     setTerminal({ ...EMPTY_TERMINAL, phase: 'compiling' });
     try {
-      await socket().send({ type: 'run', code });
+      await socket().send({ type: 'run', files });
     } catch {
       await runWithoutConsole();
     }
-  }, [code, runWithoutConsole, socket]);
+  }, [files, runWithoutConsole, socket]);
 
   const stop = useCallback(() => {
     socket()
@@ -232,7 +304,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
     setCheckError(null);
     setTab('tests');
     try {
-      const result = await api.check(lessonSlug, code);
+      const result = await api.check(lessonSlug, files);
       setCheckResult(result);
       showDiagnostics(result.diagnostics);
       setMood(result.passed ? 'happy' : 'sad');
@@ -243,16 +315,18 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
     } finally {
       setChecking(false);
     }
-  }, [checking, code, lessonSlug, onChecked, onPassed, setMood, showDiagnostics]);
+  }, [checking, files, lessonSlug, onChecked, onPassed, setMood, showDiagnostics]);
 
-  // Проверка на ошибки во время набора: через паузу после последнего изменения.
+  // Проверка на ошибки во время набора: через паузу после последнего изменения исходников.
+  const sources = useMemo(() => files.filter((f) => isSource(f.name)), [files]);
   useEffect(() => {
-    if (code.length > MAX_LIVE_SOURCE || !code.trim()) return;
+    const length = sources.reduce((sum, f) => sum + f.content.length, 0);
+    if (length > MAX_LIVE_SOURCE || sources.every((f) => !f.content.trim())) return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLive((l) => ({ ...l, status: 'checking' }));
       try {
-        const result = await api.compile(code, controller.signal);
+        const result = await api.compile(sources, controller.signal);
         const hasErrors = result.diagnostics.some((d) => d.severity === 'ERROR');
         setLive({ status: hasErrors ? 'errors' : 'ok', diagnostics: result.diagnostics });
         showDiagnostics(result.diagnostics);
@@ -265,7 +339,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [code, showDiagnostics]);
+  }, [sources, showDiagnostics]);
 
   // Горячие клавиши регистрируются один раз, поэтому вызываем актуальные обработчики через ref.
   const actions = useRef({ run, check });
@@ -278,31 +352,81 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
       actions.current.check(),
     );
     editor.onDidChangeCursorPosition((e) => setCursor({ line: e.position.lineNumber, column: e.position.column }));
-    showDiagnostics(markersRef.current);
+    // При переключении вкладки Monaco подставляет другую модель — подчёркивания и переход к ошибке.
+    editor.onDidChangeModel(() => {
+      applyMarkers();
+      const target = pendingReveal.current;
+      pendingReveal.current = null;
+      if (target) reveal(editor, target.line, target.column);
+    });
+    applyMarkers();
   };
+
+  // Модели этой страницы удаляются вместе с редактором, иначе при следующем открытии покажется старый текст.
+  useEffect(
+    () => () => {
+      const prefix = modelPath('');
+      monaco.editor.getModels().forEach((m) => m.uri.toString().startsWith(prefix) && m.dispose());
+    },
+    [modelPath],
+  );
 
   const handleChange = (value: string | undefined) => {
     const next = value ?? '';
-    setCode(next);
-    saveCode(storageKey, next === initialCode ? null : next);
+    const name = active;
+    setProject((p) => ({ ...p, files: p.files.map((f) => (f.name === name ? { ...f, content: next } : f)) }));
   };
 
   const reset = () => {
-    if (code !== initialCode && !window.confirm('Вернуть исходный код? Ваши изменения будут потеряны.')) return;
-    setCode(initialCode);
-    saveCode(storageKey, null);
+    if (!sameFiles(files, initialFiles) && !window.confirm('Вернуть исходный код? Ваши изменения будут потеряны.')) {
+      return;
+    }
+    // Модели удаляем, чтобы у файлов не осталась история правок и текст из черновика.
+    const prefix = modelPath('');
+    monaco.editor.getModels().forEach((m) => m.uri.toString().startsWith(prefix) && m.dispose());
+    setProjectState(initialProject(initialFiles));
+    saveProject(storageKey, null);
     setTerminal(EMPTY_TERMINAL);
     setCheckResult(null);
     showDiagnostics([]);
   };
 
-  const goTo = useCallback((line: number, column: number) => {
-    const editor = editorRef.current;
-    if (!editor || line <= 0) return;
-    editor.revealLineInCenter(line);
-    editor.setPosition({ lineNumber: line, column: Math.max(1, column) });
-    editor.focus();
-  }, []);
+  const selectFile = useCallback((name: string) => setProject((p) => ({ ...p, active: name })), [setProject]);
+
+  const goTo = useCallback(
+    (line: number, column: number, file?: string | null) => {
+      const editor = editorRef.current;
+      if (!editor || line <= 0) return;
+      const target = file ?? MAIN_FILE;
+      if (target !== active && files.some((f) => f.name === target)) {
+        pendingReveal.current = { line, column };
+        selectFile(target);
+        return;
+      }
+      reveal(editor, line, column);
+    },
+    [active, files, selectFile],
+  );
+
+  const createFile = (name: string) =>
+    setProject((p) => ({ files: sortFiles([...p.files, { name, content: newFileContent(name) }]), active: name }));
+
+  const renameFile = (from: string, to: string) => {
+    const prefix = modelPath('');
+    monaco.editor.getModel(monaco.Uri.parse(prefix + from))?.dispose();
+    setProject((p) => ({
+      files: sortFiles(p.files.map((f) => (f.name === from ? { ...f, name: to } : f))),
+      active: p.active === from ? to : p.active,
+    }));
+  };
+
+  const deleteFile = (name: string) => {
+    monaco.editor.getModel(monaco.Uri.parse(modelPath(name)))?.dispose();
+    setProject((p) => {
+      const rest = p.files.filter((f) => f.name !== name);
+      return { files: rest, active: p.active === name ? (rest.find((f) => isSource(f.name)) ?? rest[0]).name : p.active };
+    });
+  };
 
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
   const mod = isMac ? '⌘' : 'Ctrl';
@@ -311,6 +435,12 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
   const errors = live.diagnostics.filter((d) => d.severity === 'ERROR');
   const warnings = live.diagnostics.filter((d) => d.severity === 'WARNING');
   const firstProblem = errors[0] ?? warnings[0];
+  const errorsByFile: Record<string, number> = {};
+  for (const d of errors) {
+    const name = d.file ?? MAIN_FILE;
+    errorsByFile[name] = (errorsByFile[name] ?? 0) + 1;
+  }
+  const multiFile = files.length > 1;
 
   return (
     <div className="ide">
@@ -348,11 +478,22 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
         </button>
       </div>
 
+      <FileTabs
+        files={files}
+        active={activeFile.name}
+        errors={errorsByFile}
+        onSelect={selectFile}
+        onCreate={createFile}
+        onRename={renameFile}
+        onDelete={deleteFile}
+      />
+
       <div className="ide-editor">
         <Editor
-          language="java"
+          path={modelPath(activeFile.name)}
+          language={languageOf(activeFile.name)}
           theme="byte-dark"
-          value={code}
+          value={activeFile.content}
           onChange={handleChange}
           onMount={handleMount}
           loading={<div className="ide-loading">Загружаем редактор…</div>}
@@ -382,7 +523,7 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
       <div className="ide-statusbar">
         <button
           className={`statusbar-problems ${live.status}`}
-          onClick={() => firstProblem && goTo(firstProblem.line, firstProblem.column)}
+          onClick={() => firstProblem && goTo(firstProblem.line, firstProblem.column, firstProblem.file)}
           disabled={!firstProblem}
           title={firstProblem ? 'Перейти к ошибке' : undefined}
         >
@@ -397,7 +538,8 @@ export default function Ide({ storageKey, initialCode, lessonSlug, onPassed, onC
               <span className="statusbar-dot fail" />
               {errors.length} {plural(errors.length, ['ошибка', 'ошибки', 'ошибок'])}
               <span className="statusbar-message">
-                · строка {errors[0].line}: {errors[0].hint ?? errors[0].message}
+                · {multiFile && errors[0].file ? `${errors[0].file}, ` : ''}строка {errors[0].line}:{' '}
+                {errors[0].hint ?? errors[0].message}
               </span>
             </>
           ) : live.status === 'ok' ? (
@@ -523,4 +665,10 @@ function ResetIcon() {
 
 function firstErrorCode(diagnostics: Diagnostic[]): string | null {
   return diagnostics.find((d) => d.severity === 'ERROR')?.code ?? null;
+}
+
+function reveal(editor: MonacoEditor, line: number, column: number) {
+  editor.revealLineInCenter(line);
+  editor.setPosition({ lineNumber: line, column: Math.max(1, column) });
+  editor.focus();
 }

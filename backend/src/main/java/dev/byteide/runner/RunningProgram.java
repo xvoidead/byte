@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -38,12 +39,18 @@ public final class RunningProgram {
         }
     }
 
-    public record Limits(Duration wallTimeout, Duration cpuLimit, int maxOutputChars) {
+    /**
+     * @param maxWorkDirBytes   сколько данных может лежать в рабочей папке
+     * @param maxWorkDirEntries сколько файлов и папок может в ней быть
+     */
+    public record Limits(Duration wallTimeout, Duration cpuLimit, int maxOutputChars, long maxWorkDirBytes,
+                         int maxWorkDirEntries) {
     }
 
     private static final Duration WATCH_INTERVAL = Duration.ofMillis(50);
 
     private final Process process;
+    private final WorkDir workDir;
     private final Limits limits;
     private final Listener listener;
     private final long startNanos = System.nanoTime();
@@ -57,15 +64,16 @@ public final class RunningProgram {
     /** Запись в канал может ждать, пока программа прочитает ввод, поэтому не synchronized (см. RandomTestPool). */
     private final ReentrantLock inputLock = new ReentrantLock();
 
-    private RunningProgram(Process process, Limits limits, Listener listener) {
+    private RunningProgram(Process process, WorkDir workDir, Limits limits, Listener listener) {
         this.process = process;
+        this.workDir = workDir;
         this.limits = limits;
         this.listener = listener;
         this.stdin = process.getOutputStream();
     }
 
-    static RunningProgram start(ProcessBuilder builder, Limits limits, Listener listener, ExecutorService threads,
-                                Runnable cleanup) {
+    static RunningProgram start(ProcessBuilder builder, WorkDir workDir, Limits limits, Listener listener,
+                                ExecutorService threads, Runnable cleanup) {
         Process process;
         try {
             process = builder.start();
@@ -73,7 +81,7 @@ public final class RunningProgram {
             cleanup.run();
             throw new IllegalStateException("Не удалось запустить JVM: " + e.getMessage(), e);
         }
-        RunningProgram program = new RunningProgram(process, limits, listener);
+        RunningProgram program = new RunningProgram(process, workDir, limits, listener);
         Future<?> out = threads.submit(() -> program.pump(Stream.STDOUT));
         Future<?> err = threads.submit(() -> program.pump(Stream.STDERR));
         threads.submit(program::watch);
@@ -174,6 +182,12 @@ public final class RunningProgram {
                     kill(RunStatus.TIMEOUT);
                     return;
                 }
+                // Размер одного файла ограничивает ОС (ulimit), а здесь — сумма и число файлов.
+                WorkDir.Usage usage = workDir.usage(limits.maxWorkDirBytes(), limits.maxWorkDirEntries());
+                if (usage.bytes() > limits.maxWorkDirBytes() || usage.entries() > limits.maxWorkDirEntries()) {
+                    kill(RunStatus.FILES_LIMIT);
+                    return;
+                }
                 Thread.sleep(WATCH_INTERVAL);
             }
         } catch (InterruptedException e) {
@@ -198,12 +212,19 @@ public final class RunningProgram {
                     stderr.append(leftover);
                 }
             }
+            if (killReason.get() == null) {
+                // Программа могла успеть записать лишнее и завершиться между проверками сторожа.
+                WorkDir.Usage usage = workDir.usage(limits.maxWorkDirBytes(), limits.maxWorkDirEntries());
+                if (usage.bytes() > limits.maxWorkDirBytes() || usage.entries() > limits.maxWorkDirEntries()) {
+                    killReason.compareAndSet(null, RunStatus.FILES_LIMIT);
+                }
+            }
             RunStatus reason = killReason.get();
             Integer exitCode = reason == null ? process.exitValue() : null;
             RunStatus status = reason != null ? reason
                     : exitCode == 0 ? RunStatus.SUCCESS : RunStatus.RUNTIME_ERROR;
             ExecutionResult execution = new ExecutionResult(status, text(stdout), text(stderr), exitCode,
-                    elapsed().toMillis());
+                    elapsed().toMillis(), status == RunStatus.FILES_LIMIT ? List.of() : workDir.collect());
             try {
                 listener.onExit(execution);
             } finally {

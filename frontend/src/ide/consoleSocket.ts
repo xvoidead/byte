@@ -1,14 +1,14 @@
-import type { Diagnostic, RunStatus } from '../types';
+import type { Diagnostic, OutputFile, ProjectFile, RunStatus } from '../types';
 
 export type ConsoleEvent =
   | { type: 'started'; diagnostics: Diagnostic[]; compileTimeMs: number }
   | { type: 'compile_error'; diagnostics: Diagnostic[]; compileTimeMs: number }
   | { type: 'out'; stream: 'stdout' | 'stderr'; data: string }
-  | { type: 'exit'; status: RunStatus; exitCode: number | null; timeMs: number }
+  | { type: 'exit'; status: RunStatus; exitCode: number | null; timeMs: number; files?: OutputFile[] }
   | { type: 'error'; message: string };
 
 export type ConsoleCommand =
-  | { type: 'run'; code: string }
+  | { type: 'run'; files: ProjectFile[] }
   | { type: 'input'; data: string }
   | { type: 'eof' }
   | { type: 'stop' };

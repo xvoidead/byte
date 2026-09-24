@@ -21,6 +21,9 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param maxInteractiveSessions сколько программ может одновременно работать в интерактивной консоли
  * @param maxConcurrentCompiles  сколько проверок кода на ошибки (во время набора) может идти одновременно
  * @param queueTimeout           сколько запрос ждёт свободного слота, прежде чем получить отказ
+ * @param maxFileSizeKb          максимальный размер одного файла, который программа может записать
+ * @param maxWorkDirSizeKb       сколько всего данных может лежать в рабочей папке программы
+ * @param maxWorkDirEntries      сколько файлов и папок может быть в рабочей папке
  * @param javaHome               JDK/JRE, которым запускаются программы; по умолчанию — текущий
  */
 @ConfigurationProperties("byte.runner")
@@ -37,6 +40,9 @@ public record RunnerProperties(
         @DefaultValue("8") int maxInteractiveSessions,
         @DefaultValue("4") int maxConcurrentCompiles,
         @DefaultValue("10s") Duration queueTimeout,
+        @DefaultValue("2048") int maxFileSizeKb,
+        @DefaultValue("4096") int maxWorkDirSizeKb,
+        @DefaultValue("100") int maxWorkDirEntries,
         Path javaHome) {
 
     public Path javaExecutable() {
@@ -47,6 +53,6 @@ public record RunnerProperties(
     /** Настройки по умолчанию — для тестов и инструментов вне Spring. */
     public static RunnerProperties defaults() {
         return new RunnerProperties(Duration.ofSeconds(5), Duration.ofSeconds(5), Duration.ofMinutes(2), 128, 32,
-                65536, 50_000, 100_000, 4, 8, 4, Duration.ofSeconds(10), null);
+                65536, 50_000, 100_000, 4, 8, 4, Duration.ofSeconds(10), 2048, 4096, 100, null);
     }
 }

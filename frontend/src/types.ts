@@ -1,4 +1,24 @@
-export type RunStatus = 'SUCCESS' | 'COMPILATION_ERROR' | 'RUNTIME_ERROR' | 'TIMEOUT' | 'OUTPUT_LIMIT' | 'STOPPED';
+export type RunStatus =
+  | 'SUCCESS'
+  | 'COMPILATION_ERROR'
+  | 'RUNTIME_ERROR'
+  | 'TIMEOUT'
+  | 'OUTPUT_LIMIT'
+  | 'STOPPED'
+  | 'FILES_LIMIT';
+
+/** Файл проекта: исходник .java, ресурс resources/… или файл рабочей папки (config.yml и т.п.). */
+export interface ProjectFile {
+  name: string;
+  content: string;
+}
+
+/** Файл рабочей папки после запуска; content = null — двоичный или слишком большой. */
+export interface OutputFile {
+  name: string;
+  content: string | null;
+  size: number;
+}
 
 export interface Diagnostic {
   severity: 'ERROR' | 'WARNING';
@@ -8,6 +28,8 @@ export interface Diagnostic {
   message: string;
   hint: string | null;
   code: string | null;
+  /** Файл проекта, к которому относится сообщение; null — к проекту целиком. */
+  file: string | null;
 }
 
 export interface RunResult {
@@ -18,6 +40,7 @@ export interface RunResult {
   diagnostics: Diagnostic[];
   compileTimeMs: number;
   runTimeMs: number;
+  files: OutputFile[];
 }
 
 export interface LessonSummary {
@@ -31,7 +54,10 @@ export interface LessonSummary {
 export interface Example {
   name: string;
   stdin: string;
-  expectedOutput: string;
+  /** null — вывод не проверяется, только файлы. */
+  expectedOutput: string | null;
+  files: Record<string, string> | null;
+  expectedFiles: Record<string, string> | null;
 }
 
 export interface Quiz {
@@ -53,6 +79,7 @@ export interface LessonDetails extends LessonSummary {
   steps: Step[];
   task: string;
   starterCode: string;
+  starterFiles: ProjectFile[];
   examples: Example[];
   testCount: number;
   hints: string[];
@@ -70,6 +97,14 @@ export interface TestOutcome {
   expectedOutput: string | null;
   actualOutput: string | null;
   stderr: string | null;
+  files: FileOutcome[] | null;
+}
+
+export interface FileOutcome {
+  name: string;
+  passed: boolean;
+  expected: string;
+  actual: string | null;
 }
 
 export interface RequirementOutcome {

@@ -49,13 +49,17 @@ public class CodeRunner {
      * Занимает отдельный слот, который освобождается, когда программа завершится.
      */
     public Interactive startInteractive(String source, RunningProgram.Listener listener) {
+        return startInteractive(Project.single(source), listener);
+    }
+
+    public Interactive startInteractive(Project project, RunningProgram.Listener listener) {
         sandboxHealth.ensureVerified();
         if (!interactiveSlots.tryAcquire()) {
             throw new RunnerBusyException();
         }
         boolean started = false;
         try {
-            CompilationResult compilation = compileWithSlot(source);
+            CompilationResult compilation = compileWithSlot(project);
             if (!compilation.success()) {
                 return new CompilationFailed(compilation);
             }
@@ -74,7 +78,7 @@ public class CodeRunner {
                     }
                 }
             };
-            RunningProgram program = executor.startInteractive(compilation.program(), releasing);
+            RunningProgram program = executor.startInteractive(compilation.program(), project.workFiles(), releasing);
             started = true;
             return new Started(compilation, program);
         } finally {
@@ -86,18 +90,22 @@ public class CodeRunner {
 
     /** Проверка на ошибки для подсветки во время набора: без запуска и без записи на диск. */
     public JavaCompilationService.DiagnosticsResult diagnose(String source) {
+        return diagnose(Project.single(source));
+    }
+
+    public JavaCompilationService.DiagnosticsResult diagnose(Project project) {
         acquire(compileSlots, 2_000);
         try {
-            return compiler.diagnose(source);
+            return compiler.diagnose(project);
         } finally {
             compileSlots.release();
         }
     }
 
-    private CompilationResult compileWithSlot(String source) {
+    private CompilationResult compileWithSlot(Project project) {
         acquire(compileSlots, properties.queueTimeout().toMillis());
         try {
-            return compiler.compile(source);
+            return compiler.compile(project);
         } finally {
             compileSlots.release();
         }
@@ -115,26 +123,32 @@ public class CodeRunner {
     }
 
     public RunResult run(String source, String stdin) {
+        return run(Project.single(source), stdin);
+    }
+
+    /** Обычный запуск: файлы проекта (кроме исходников и ресурсов) кладутся в рабочую папку программы. */
+    public RunResult run(Project project, String stdin) {
         return withSlot(() -> {
-            CompilationResult compilation = compiler.compile(source);
+            CompilationResult compilation = compiler.compile(project);
             if (!compilation.success()) {
                 return RunResult.compilationFailed(compilation);
             }
             try (CompiledProgram program = compilation.program()) {
-                return RunResult.executed(compilation, executor.execute(program, stdin));
+                ExecutionInput input = new ExecutionInput(stdin, project.workFiles());
+                return RunResult.executed(compilation, executor.execute(program, input));
             }
         });
     }
 
     /**
-     * Компилирует код один раз и запускает его на каждом из входов. Если код не скомпилировался,
+     * Компилирует проект один раз и запускает его на каждом из входов. Если код не скомпилировался,
      * {@code onCompiled} не вызывается и возвращается {@code onCompilationError}.
      */
-    public <T> T runEach(String source, List<String> inputs,
+    public <T> T runEach(Project project, List<ExecutionInput> inputs,
                          Function<CompilationResult, T> onCompilationError,
                          Function<List<RunResult>, T> onCompiled) {
         return withSlot(() -> {
-            CompilationResult compilation = compiler.compile(source);
+            CompilationResult compilation = compiler.compile(project);
             if (!compilation.success()) {
                 return onCompilationError.apply(compilation);
             }
@@ -145,6 +159,13 @@ public class CodeRunner {
                 return onCompiled.apply(results);
             }
         });
+    }
+
+    public <T> T runEach(String source, List<String> inputs,
+                         Function<CompilationResult, T> onCompilationError,
+                         Function<List<RunResult>, T> onCompiled) {
+        return runEach(Project.single(source), inputs.stream().map(ExecutionInput::of).toList(),
+                onCompilationError, onCompiled);
     }
 
     private <T> T withSlot(Supplier<T> action) {

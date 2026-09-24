@@ -1,0 +1,29 @@
+{
+  "module": "Конфиги",
+  "title": "Проект с конфигом",
+  "summary": "Проверка формата уроков-проектов.",
+  "tests": [
+    {
+      "name": "Конфиг уже есть",
+      "files": { "config.yml": "greeting: Здравствуй\nmax-players: 5\n" },
+      "expectedOutput": "Здравствуй! Мест: 5\n",
+      "hidden": false
+    },
+    {
+      "name": "Конфига нет — создаётся из ресурсов",
+      "files": {},
+      "expectedOutput": "Привет! Мест: 20\n",
+      "expectedFiles": { "config.yml": "greeting: Привет\nmax-players: 20\n" },
+      "hidden": false
+    },
+    {
+      "name": "Недостающий ключ",
+      "files": { "config.yml": "greeting: Хай\n" },
+      "expectedFiles": { "config.yml": "greeting: Хай\nmax-players: 20\n" },
+      "hidden": true
+    }
+  ],
+  "requirements": [
+    { "type": "class", "name": "Config", "message": "Вынесите работу с конфигом в класс Config." }
+  ]
+}

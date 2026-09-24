@@ -59,7 +59,7 @@ class LessonsContentTest {
             assertThat(lesson.steps()).as(lesson.slug()).hasSizeGreaterThanOrEqualTo(2);
             assertThat(lesson.task()).isNotBlank();
             assertThat(lesson.starterCode()).contains("public static void main");
-            assertThat(lesson.solution()).contains("public static void main");
+            assertThat(lesson.solution().allSources()).contains("public static void main");
             assertThat(lesson.tests()).anyMatch(t -> !t.hidden());
             assertThat(lesson.hints()).as(lesson.slug() + ": подсказки").isNotEmpty();
             assertThat(lesson.quizzes()).as(lesson.slug() + ": вопросы").isNotEmpty();
@@ -88,7 +88,7 @@ class LessonsContentTest {
     void starterCodeCompilesButDoesNotPass(String slug) {
         Lesson lesson = repository.findBySlug(slug).orElseThrow();
 
-        CheckResult result = checker.check(lesson, lesson.starterCode());
+        CheckResult result = checker.check(lesson, lesson.starter());
 
         assertThat(result.compiled()).as("стартовый код должен компилироваться").isTrue();
         assertThat(result.passed()).isFalse();

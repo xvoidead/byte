@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { track } from '../analytics';
 import { api, ApiError } from '../api';
@@ -13,11 +13,11 @@ import {
   completedLessons,
   loadLessonState,
   markCompleted,
-  saveCode,
   saveLessonState,
+  saveProject,
   type LessonState,
 } from '../storage';
-import type { CheckResult, LessonDetails } from '../types';
+import type { CheckResult, Example, LessonDetails, ProjectFile } from '../types';
 
 const Ide = lazy(() => import('../ide/Ide'));
 
@@ -137,6 +137,11 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
   );
 
   const step = current < taskIndex ? lesson.steps[current] : null;
+  const initialFiles = useMemo<ProjectFile[]>(
+    () =>
+      lesson.starterFiles?.length ? lesson.starterFiles : [{ name: 'Main.java', content: lesson.starterCode }],
+    [lesson],
+  );
 
   return (
     <main className="lesson-layout">
@@ -195,8 +200,8 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
                 track('solution_open', lesson.slug, null, completed ? 1 : 0);
                 update((s) => ({ ...s, solutionShown: true }));
               }}
-              onInsertSolution={(code) => {
-                saveCode(`lesson:${lesson.slug}`, code);
+              onInsertSolution={(files) => {
+                saveProject(`lesson:${lesson.slug}`, { files, active: 'Main.java' });
                 setIdeVersion((v) => v + 1);
               }}
             />
@@ -236,7 +241,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
           <Ide
             key={ideVersion}
             storageKey={`lesson:${lesson.slug}`}
-            initialCode={lesson.starterCode}
+            initialFiles={initialFiles}
             lessonSlug={lesson.slug}
             onPassed={onPassed}
             onChecked={onChecked}
@@ -254,11 +259,11 @@ interface TaskStepProps {
   completed: boolean;
   onRevealHint: () => void;
   onSolutionShown: () => void;
-  onInsertSolution: (code: string) => void;
+  onInsertSolution: (files: ProjectFile[]) => void;
 }
 
 function TaskStep({ lesson, state, completed, onRevealHint, onSolutionShown, onInsertSolution }: TaskStepProps) {
-  const [solution, setSolution] = useState<string | null>(null);
+  const [solution, setSolution] = useState<ProjectFile[] | null>(null);
   const [solutionError, setSolutionError] = useState<string | null>(null);
   const allHints = state.hints >= lesson.hints.length;
   const solutionAvailable = completed || (allHints && state.failedChecks >= CHECKS_BEFORE_SOLUTION);
@@ -266,7 +271,8 @@ function TaskStep({ lesson, state, completed, onRevealHint, onSolutionShown, onI
   const showSolution = async () => {
     if (!completed && !window.confirm('Посмотреть решение? Попробуйте сначала решить сами — так запомнится лучше.')) return;
     try {
-      setSolution((await api.solution(lesson.slug)).code);
+      const loaded = await api.solution(lesson.slug);
+      setSolution(loaded.files?.length ? loaded.files : [{ name: 'Main.java', content: loaded.code }]);
       setSolutionError(null);
       onSolutionShown();
     } catch (e) {
@@ -291,19 +297,7 @@ function TaskStep({ lesson, state, completed, onRevealHint, onSolutionShown, onI
       )}
 
       {lesson.examples.map((example, i) => (
-        <div key={i} className="example">
-          <div className="example-title">Пример {i + 1}</div>
-          <div className="example-io">
-            <div>
-              <div className="example-label">Ввод</div>
-              <pre>{example.stdin || <em className="muted">(нет)</em>}</pre>
-            </div>
-            <div>
-              <div className="example-label">Вывод</div>
-              <pre>{example.expectedOutput}</pre>
-            </div>
-          </div>
-        </div>
+        <ExampleView key={i} example={example} index={i + 1} />
       ))}
       <p className="muted small">
         Всего тестов: {lesson.testCount}
@@ -331,19 +325,26 @@ function TaskStep({ lesson, state, completed, onRevealHint, onSolutionShown, onI
         {solution ? (
           <>
             <div className="task-subtitle">Разбор: эталонное решение</div>
-            <pre className="solution-code">
-              <code>
-                {highlightJava(solution).map((t, i) =>
-                  t.kind ? (
-                    <span key={i} className={`tok-${t.kind}`}>
-                      {t.text}
-                    </span>
-                  ) : (
-                    t.text
-                  ),
-                )}
-              </code>
-            </pre>
+            {solution.map((file) => (
+              <div key={file.name} className="solution-file">
+                {solution.length > 1 && <div className="solution-file-name">{file.name}</div>}
+                <pre className="solution-code">
+                  <code>
+                    {file.name.endsWith('.java')
+                      ? highlightJava(file.content).map((t, i) =>
+                          t.kind ? (
+                            <span key={i} className={`tok-${t.kind}`}>
+                              {t.text}
+                            </span>
+                          ) : (
+                            t.text
+                          ),
+                        )
+                      : file.content}
+                  </code>
+                </pre>
+              </div>
+            ))}
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => {
@@ -374,5 +375,62 @@ function BulbIcon() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2h5c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z" />
     </svg>
+  );
+}
+
+/** Открытый тест: ввод и вывод, а для заданий с файлами — файлы до и после запуска. */
+function ExampleView({ example, index }: { example: Example; index: number }) {
+  const before = Object.entries(example.files ?? {});
+  const after = Object.entries(example.expectedFiles ?? {});
+  return (
+    <div className="example">
+      <div className="example-title">
+        Пример {index}
+        {example.name && !/^Пример/.test(example.name) ? `: ${example.name}` : ''}
+      </div>
+      <div className="example-io">
+        <div>
+          <div className="example-label">Ввод</div>
+          <pre>{example.stdin || <em className="muted">(нет)</em>}</pre>
+          {example.files && (
+            <>
+              <div className="example-label">Файлы до запуска</div>
+              {before.length === 0 ? (
+                <pre>
+                  <em className="muted">(папка пуста)</em>
+                </pre>
+              ) : (
+                before.map(([name, content]) => <FileBlock key={name} name={name} content={content} />)
+              )}
+            </>
+          )}
+        </div>
+        <div>
+          {example.expectedOutput !== null && (
+            <>
+              <div className="example-label">Вывод</div>
+              <pre>{example.expectedOutput}</pre>
+            </>
+          )}
+          {after.length > 0 && (
+            <>
+              <div className="example-label">Файлы после запуска</div>
+              {after.map(([name, content]) => (
+                <FileBlock key={name} name={name} content={content} />
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FileBlock({ name, content }: { name: string; content: string }) {
+  return (
+    <div className="example-file">
+      <div className="example-file-name">{name}</div>
+      <pre>{content || <em className="muted">(пустой файл)</em>}</pre>
+    </div>
   );
 }

@@ -314,8 +314,104 @@ const collectors: Member[] = [
   m('toMap', 'Function key, Function value', 'Collector', 'Собирает в Map.', true),
 ];
 
+const files: Member[] = [
+  m('readString', 'Path path', 'String', 'Читает весь файл как строку (UTF-8).', true),
+  m('writeString', 'Path path, CharSequence text', 'Path', 'Записывает строку в файл, создавая или перезаписывая его.', true),
+  m('readAllLines', 'Path path', 'List<String>', 'Читает файл построчно в список.', true),
+  m('write', 'Path path, Iterable<String> lines', 'Path', 'Записывает строки в файл.', true),
+  m('exists', 'Path path', 'boolean', 'true, если файл или папка существует.', true),
+  m('isDirectory', 'Path path', 'boolean', 'true, если это папка.', true),
+  m('createDirectories', 'Path dir', 'Path', 'Создаёт папку вместе с родительскими.', true),
+  m('delete', 'Path path', 'void', 'Удаляет файл или пустую папку.', true),
+  m('deleteIfExists', 'Path path', 'boolean', 'Удаляет файл, если он есть.', true),
+  m('copy', 'Path from, Path to', 'Path', 'Копирует файл.', true),
+  m('move', 'Path from, Path to', 'Path', 'Перемещает или переименовывает файл.', true),
+  m('size', 'Path path', 'long', 'Размер файла в байтах.', true),
+  m('list', 'Path dir', 'Stream<Path>', 'Содержимое папки (поток путей).', true),
+  m('lines', 'Path path', 'Stream<String>', 'Строки файла как поток.', true),
+  m('newBufferedReader', 'Path path', 'BufferedReader', 'Читатель файла построчно.', true),
+  m('newBufferedWriter', 'Path path', 'BufferedWriter', 'Писатель в файл.', true),
+];
+
+const pathStatic: Member[] = [m('of', 'String first, String... more', 'Path', 'Путь к файлу, например Path.of("config.yml").', true)];
+
+const path: Member[] = [
+  m('getFileName', '', 'Path', 'Имя файла без папок.'),
+  m('getParent', '', 'Path', 'Папка, в которой лежит файл.'),
+  m('resolve', 'String other', 'Path', 'Путь внутри этой папки: dir.resolve("data.json").'),
+  m('toAbsolutePath', '', 'Path', 'Абсолютный путь.'),
+  m('toString', '', 'String', 'Путь как строка.'),
+];
+
+const gson: Member[] = [
+  m('toJson', 'Object value', 'String', 'Превращает объект (record, список, Map) в строку JSON.'),
+  m('fromJson', 'String json, Class<T> type', 'T', 'Читает JSON в объект: gson.fromJson(text, Config.class).'),
+  m('toJsonTree', 'Object value', 'JsonElement', 'Превращает объект в дерево JsonElement.'),
+];
+
+const gsonBuilder: Member[] = [
+  m('setPrettyPrinting', '', 'GsonBuilder', 'Красивый JSON с отступами.'),
+  m('serializeNulls', '', 'GsonBuilder', 'Записывать поля со значением null.'),
+  m('create', '', 'Gson', 'Создаёт настроенный объект Gson.'),
+];
+
+const jsonObject: Member[] = [
+  m('get', 'String key', 'JsonElement', 'Значение по ключу или null.'),
+  m('has', 'String key', 'boolean', 'true, если ключ есть.'),
+  m('addProperty', 'String key, String value', 'void', 'Добавляет строку, число или boolean.'),
+  m('add', 'String key, JsonElement value', 'void', 'Добавляет вложенный объект или массив.'),
+  m('remove', 'String key', 'JsonElement', 'Удаляет ключ.'),
+  m('getAsJsonObject', 'String key', 'JsonObject', 'Вложенный объект.'),
+  m('getAsJsonArray', 'String key', 'JsonArray', 'Вложенный массив.'),
+  m('keySet', '', 'Set<String>', 'Все ключи.'),
+  m('size', '', 'int', 'Число ключей.'),
+];
+
+const jsonElement: Member[] = [
+  m('getAsString', '', 'String', 'Значение как строка.'),
+  m('getAsInt', '', 'int', 'Значение как int.'),
+  m('getAsDouble', '', 'double', 'Значение как double.'),
+  m('getAsBoolean', '', 'boolean', 'Значение как boolean.'),
+  m('getAsJsonObject', '', 'JsonObject', 'Элемент как объект.'),
+  m('getAsJsonArray', '', 'JsonArray', 'Элемент как массив.'),
+  m('isJsonObject', '', 'boolean', 'true, если это объект { }.'),
+  m('isJsonArray', '', 'boolean', 'true, если это массив [ ].'),
+  m('isJsonNull', '', 'boolean', 'true, если это null.'),
+];
+
+const jsonArray: Member[] = [
+  m('size', '', 'int', 'Число элементов.'),
+  m('get', 'int index', 'JsonElement', 'Элемент по индексу.'),
+  m('add', 'JsonElement element', 'void', 'Добавляет элемент.'),
+  ...jsonElement.filter((e) => e.name.startsWith('isJson')),
+];
+
+const jsonParser: Member[] = [
+  m('parseString', 'String json', 'JsonElement', 'Разбирает строку JSON в дерево элементов.', true),
+];
+
+const yaml: Member[] = [
+  m('load', 'String yaml', 'T', 'Читает YAML в Map, List или значение: Map<String, Object> m = yaml.load(text).'),
+  m('loadAs', 'String yaml, Class<T> type', 'T', 'Читает YAML в объект класса с сеттерами.'),
+  m('dump', 'Object data', 'String', 'Превращает Map или List в строку YAML.'),
+];
+
+const dumperOptions: Member[] = [
+  m('setDefaultFlowStyle', 'DumperOptions.FlowStyle style', 'void', 'BLOCK — каждый ключ с новой строки, как в конфигах.'),
+  m('setIndent', 'int indent', 'void', 'Размер отступа.'),
+  m('setPrettyFlow', 'boolean pretty', 'void', 'Красивое оформление.'),
+];
+
 /** Члены экземпляров по имени типа. */
 const INSTANCE: Record<string, Member[]> = {
+  Path: path,
+  Gson: gson,
+  GsonBuilder: gsonBuilder,
+  JsonObject: jsonObject,
+  JsonElement: jsonElement,
+  JsonArray: jsonArray,
+  Yaml: yaml,
+  DumperOptions: dumperOptions,
   String: string,
   StringBuilder: stringBuilder,
   Scanner: scanner,
@@ -344,6 +440,9 @@ const INSTANCE: Record<string, Member[]> = {
 
 /** Статические члены по имени класса. */
 const STATIC: Record<string, Member[]> = {
+  Files: files,
+  Path: pathStatic,
+  JsonParser: jsonParser,
   System: system,
   Math: math,
   Arrays: arrays,

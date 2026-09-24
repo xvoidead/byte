@@ -51,12 +51,25 @@ class SandboxSecurityTest {
             "var f = String.class.getDeclaredField(\"value\"); f.setAccessible(true);",
             "System.setOut(new PrintStream(new ByteArrayOutputStream()));",
             "System.setSecurityManager(null);",
+            // Рабочая папка не выпускает наружу.
+            "System.out.println(Files.readString(Path.of(\"../sandbox.policy\")));",
+            "System.out.println(Arrays.toString(new File(\"..\").list()));",
+            "Files.createSymbolicLink(Path.of(\"link\"), Path.of(\"/etc/passwd\"));",
+            "Files.createLink(Path.of(\"hard\"), Path.of(\"/etc/hostname\"));",
+            // Защита не доступна через рефлексию, хотя рефлексия внутри своего кода разрешена.
+            "var f = System.getSecurityManager().getClass().getDeclaredFields()[0]; f.setAccessible(true);",
+            "java.lang.invoke.MethodHandles.privateLookupIn(System.getSecurityManager().getClass(), java.lang.invoke.MethodHandles.lookup());",
+            "var m = Thread.class.getDeclaredMethod(\"setPriority0\", int.class); m.setAccessible(true);",
+            "Class.forName(\"sun.misc.Unsafe\");",
+            "Class.forName(\"jdk.internal.misc.Unsafe\");",
+            "new URLClassLoader(new URL[0]);",
     })
     void blocksDangerousOperations(String body) {
         RunResult result = run(body);
 
         assertThat(result.status()).as(body).isEqualTo(RunStatus.RUNTIME_ERROR);
-        assertThat(result.stderr()).as(body).containsAnyOf("AccessControlException", "SecurityException");
+        assertThat(result.stderr()).as(body).containsAnyOf("AccessControlException", "SecurityException",
+                "InaccessibleObjectException", "IllegalAccessException", "ClassNotFoundException");
         assertThat(new java.io.File("/tmp/byte-escape")).doesNotExist();
     }
 
@@ -100,7 +113,8 @@ class SandboxSecurityTest {
         RunnerProperties properties = new RunnerProperties(Duration.ofSeconds(10), Duration.ofSeconds(1),
                 defaults.interactiveTimeout(), defaults.maxMemoryMb(), defaults.maxThreads(), defaults.maxOutputChars(),
                 defaults.maxSourceLength(), defaults.maxStdinLength(), defaults.maxConcurrentRuns(),
-                defaults.maxInteractiveSessions(), defaults.maxConcurrentCompiles(), defaults.queueTimeout(), null);
+                defaults.maxInteractiveSessions(), defaults.maxConcurrentCompiles(), defaults.queueTimeout(),
+                defaults.maxFileSizeKb(), defaults.maxWorkDirSizeKb(), defaults.maxWorkDirEntries(), null);
         ProcessExecutionService executor = new ProcessExecutionService(properties, new Sandbox(properties));
         CodeRunner cpuLimited = new CodeRunner(CodeRunnerTest.COMPILER, executor,
                 new SandboxHealth(CodeRunnerTest.COMPILER, executor), properties);
@@ -151,7 +165,8 @@ class SandboxSecurityTest {
 
     @Test
     void reportsUnreadableCodeInsteadOfEmptyError() {
-        String nested = "(".repeat(3000) + "1" + ")".repeat(3000);
+        // Глубина с запасом: разогретый JIT-ом javac тратит на вызов меньше стека.
+        String nested = "(".repeat(20_000) + "1" + ")".repeat(20_000);
         RunResult result = runner.run(
                 "public class Main { public static void main(String[] a) { int x = " + nested + "; } }", "");
 

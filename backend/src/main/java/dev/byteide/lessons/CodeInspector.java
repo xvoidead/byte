@@ -21,6 +21,8 @@ import javax.tools.ToolProvider;
 
 import org.springframework.stereotype.Component;
 
+import dev.byteide.runner.Project;
+
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.DoWhileLoopTree;
@@ -55,17 +57,27 @@ public class CodeInspector {
     }
 
     public List<Outcome> check(String source, List<Requirement> requirements) {
+        return check(Project.single(source), requirements);
+    }
+
+    /** Требования проверяются по всем исходникам проекта вместе. */
+    public List<Outcome> check(Project project, List<Requirement> requirements) {
         if (requirements.isEmpty()) {
             return List.of();
         }
-        Facts facts = inspect(source);
+        Facts facts = inspect(project);
         return requirements.stream().map(r -> new Outcome(r.message(), facts.satisfies(r))).toList();
     }
 
     Facts inspect(String source) {
+        return inspect(Project.single(source));
+    }
+
+    Facts inspect(Project project) {
         try (StandardJavaFileManager files = compiler.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8)) {
+            List<Source> sources = project.sources().stream().map(f -> new Source(f.name(), f.content())).toList();
             JavacTask task = (JavacTask) compiler.getTask(null, files, diagnostic -> {
-            }, List.of("-proc:none"), null, List.of(new Source(source)));
+            }, List.of("-proc:none"), null, sources);
             Facts facts = new Facts();
             for (CompilationUnitTree unit : task.parse()) {
                 new Collector(facts).scan(unit, null);
@@ -337,8 +349,8 @@ public class CodeInspector {
     private static final class Source extends SimpleJavaFileObject {
         private final String code;
 
-        Source(String code) {
-            super(URI.create("string:///Main.java"), Kind.SOURCE);
+        Source(String name, String code) {
+            super(URI.create("string:///" + name), Kind.SOURCE);
             this.code = code;
         }
 

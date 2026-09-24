@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from 'react';
 import type { Diagnostic, RunStatus } from '../types';
 import { DiagnosticList, runtimeHint, statusText } from './RunOutput';
+import { formatSize, type FileChanges } from './project';
 
 export type SegmentKind = 'stdout' | 'stderr' | 'stdin' | 'system';
 
@@ -17,6 +18,8 @@ export interface TerminalState {
   compileErrors: Diagnostic[];
   exit: { status: RunStatus; exitCode: number | null; timeMs: number; compileTimeMs: number } | null;
   error: string | null;
+  /** Что программа сделала с файлами рабочей папки. */
+  fileChanges?: FileChanges | null;
 }
 
 export const EMPTY_TERMINAL: TerminalState = {
@@ -41,7 +44,7 @@ interface TerminalProps {
   state: TerminalState;
   onInput: (line: string) => void;
   onEof: () => void;
-  onDiagnosticClick: (line: number, column: number) => void;
+  onDiagnosticClick: (line: number, column: number, file?: string | null) => void;
 }
 
 /**
@@ -93,6 +96,8 @@ export function Terminal({ state, onInput, onEof, onDiagnosticClick }: TerminalP
       ? 'Программа работала слишком долго и была остановлена. Проверьте, нет ли бесконечного цикла.'
       : state.exit?.status === 'OUTPUT_LIMIT'
         ? 'Вывод обрезан. Возможно, программа печатает в бесконечном цикле.'
+        : state.exit?.status === 'FILES_LIMIT'
+          ? 'Программа записала слишком много данных: в рабочей папке можно хранить до 4 МБ и до 100 файлов, один файл — до 2 МБ.'
         : state.exit && state.exit.status !== 'SUCCESS'
           ? runtimeHint(state.segments.filter((s) => s.kind === 'stderr').map((s) => s.text).join(''))
           : undefined;
@@ -174,10 +179,29 @@ export function Terminal({ state, onInput, onEof, onDiagnosticClick }: TerminalP
           </span>
         </div>
       )}
+      {state.fileChanges && <FileChangesNote changes={state.fileChanges} />}
       {state.exit?.status === 'SUCCESS' && state.segments.length === 0 && (
         <p className="console-placeholder">Программа ничего не вывела.</p>
       )}
       {hint && <p className="run-hint">{hint}</p>}
+    </div>
+  );
+}
+
+function FileChangesNote({ changes }: { changes: FileChanges }) {
+  const parts: string[] = [];
+  if (changes.created.length) parts.push(`создан${changes.created.length > 1 ? 'ы' : ''} ${changes.created.join(', ')}`);
+  if (changes.changed.length) parts.push(`изменён${changes.changed.length > 1 ? 'ы' : ''} ${changes.changed.join(', ')}`);
+  if (changes.deleted.length) parts.push(`удалён${changes.deleted.length > 1 ? 'ы' : ''} ${changes.deleted.join(', ')}`);
+  return (
+    <div className="term-files">
+      {parts.length > 0 && <p>Файлы: {parts.join('; ')}.</p>}
+      {changes.binary.length > 0 && (
+        <p className="muted">
+          Не показываются в редакторе (двоичные или больше 64 КБ):{' '}
+          {changes.binary.map((f) => `${f.name} (${formatSize(f.size)})`).join(', ')}.
+        </p>
+      )}
     </div>
   );
 }

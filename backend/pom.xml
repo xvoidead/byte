@@ -58,6 +58,36 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- Библиотеки, доступные программам учеников. Лежат отдельно от зависимостей сервера:
+                 сервер копирует их в песочницу и добавляет в classpath при компиляции и запуске. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>student-libraries</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/sandbox-lib</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.google.code.gson</groupId>
+                                    <artifactId>gson</artifactId>
+                                    <version>${gson.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.yaml</groupId>
+                                    <artifactId>snakeyaml</artifactId>
+                                    <version>${snakeyaml.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

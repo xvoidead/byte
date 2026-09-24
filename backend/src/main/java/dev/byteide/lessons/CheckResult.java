@@ -17,6 +17,9 @@ public record CheckResult(
         List<TestOutcome> tests,
         List<CodeInspector.Outcome> requirements) {
 
+    /**
+     * @param files проверка файлов после запуска; null для скрытых тестов и тестов без проверки файлов
+     */
     public record TestOutcome(
             String name,
             boolean passed,
@@ -25,6 +28,11 @@ public record CheckResult(
             String stdin,
             String expectedOutput,
             String actualOutput,
-            String stderr) {
+            String stderr,
+            List<FileOutcome> files) {
+    }
+
+    /** Файл после запуска: каким должен быть и каким получился (null — файла нет или он не текстовый). */
+    public record FileOutcome(String name, boolean passed, String expected, String actual) {
     }
 }

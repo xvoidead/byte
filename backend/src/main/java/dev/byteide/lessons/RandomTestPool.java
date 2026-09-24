@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import dev.byteide.runner.CompilationResult;
 import dev.byteide.runner.CompiledProgram;
+import dev.byteide.runner.ExecutionInput;
 import dev.byteide.runner.ExecutionResult;
 import dev.byteide.runner.JavaCompilationService;
 import dev.byteide.runner.ProcessExecutionService;
@@ -125,7 +126,8 @@ public class RandomTestPool {
         try (CompiledProgram program = compilation.program()) {
             for (int i = 0; i < POOL_SIZE; i++) {
                 String input = generator.render(random);
-                ExecutionResult result = executor.execute(program, input);
+                ExecutionResult result = executor.execute(program,
+                        new ExecutionInput(input, lesson.solution().workFiles()));
                 if (result.status() != RunStatus.SUCCESS) {
                     throw new IllegalStateException("Эталонное решение завершилось со статусом " + result.status()
                             + " на входе:\n" + input + "\n" + result.stderr());

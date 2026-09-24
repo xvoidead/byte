@@ -21,40 +21,37 @@ public class SandboxHealth {
 
     static final String PROBE = """
             public class Main {
-                static void probe(String name, Runnable action) {
+                static void probe(String name, Action action) {
                     try {
                         action.run();
                         System.out.println("OPEN " + name);
-                    } catch (SecurityException e) {
+                    } catch (Throwable e) {
                         System.out.println("BLOCKED " + name);
                     }
+                }
+
+                interface Action {
+                    void run() throws Exception;
                 }
 
                 public static void main(String[] args) {
                     probe("env", () -> System.getenv("PATH"));
                     probe("process", () -> ProcessHandle.current().parent());
                     probe("file", () -> new java.io.File("/").list());
-                    probe("exec", () -> {
-                        try {
-                            new ProcessBuilder("true").start();
-                        } catch (java.io.IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    probe("network", () -> {
-                        try {
-                            new java.net.Socket("127.0.0.1", 9).close();
-                        } catch (java.io.IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+                    probe("outside", () -> java.nio.file.Files.readString(java.nio.file.Path.of("../sandbox.policy")));
+                    probe("exec", () -> new ProcessBuilder("true").start());
+                    probe("network", () -> new java.net.Socket("127.0.0.1", 9).close());
+                    probe("guard", () -> System.getSecurityManager().getClass().getDeclaredFields()[0].setAccessible(true));
+                    probe("unsafe", () -> Class.forName("sun.misc.Unsafe"));
+                    probe("workdir", () -> java.nio.file.Files.writeString(java.nio.file.Path.of("probe.txt"), "ok"));
                     System.out.println("Привет");
                 }
             }
             """;
 
     static final List<String> EXPECTED = List.of(
-            "BLOCKED env", "BLOCKED process", "BLOCKED file", "BLOCKED exec", "BLOCKED network", "Привет");
+            "BLOCKED env", "BLOCKED process", "BLOCKED file", "BLOCKED outside", "BLOCKED exec", "BLOCKED network",
+            "BLOCKED guard", "BLOCKED unsafe", "OPEN workdir", "Привет");
 
     private final JavaCompilationService compiler;
     private final ProcessExecutionService executor;

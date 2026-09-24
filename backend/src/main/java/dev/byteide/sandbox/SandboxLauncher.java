@@ -14,12 +14,16 @@ import java.util.Map;
 /**
  * Точка входа дочерней JVM. Загружает классы ученика отдельным загрузчиком, включает SecurityManager
  * и только потом вызывает {@code main}. Политика безопасности (файл передаётся сервером) даёт полные права
- * лишь этому лаунчеру, а коду ученика — ничего: ни файлов, ни сети, ни процессов, ни переменных окружения.
+ * лишь этому лаунчеру, а коду ученика — только рабочую папку: ни сети, ни процессов, ни переменных окружения.
  *
  * <p>Класс копируется сервером в отдельный каталог и выполняется в чужой JVM, поэтому зависит только от JDK
  * и не использует анонимные классы (их файлы пришлось бы копировать отдельно).
  *
- * <p>Аргументы: имя главного класса, каталог с классами ученика, максимальное число потоков.
+ * <p>Лаунчер запускается как именованный модуль, который ничего не открывает: код ученика не может
+ * рефлексией добраться до {@link Guard}.
+ *
+ * <p>Аргументы: имя главного класса, каталог с классами ученика, максимальное число потоков,
+ * библиотеки через разделитель путей (может быть пусто).
  */
 public final class SandboxLauncher {
 
@@ -37,8 +41,15 @@ public final class SandboxLauncher {
         File classesDir = new File(args[1]);
         int maxThreads = Integer.parseInt(args[2]);
 
-        URLClassLoader loader = new URLClassLoader(new URL[]{classesDir.toURI().toURL()},
-                ClassLoader.getPlatformClassLoader());
+        // Библиотеки загружаются тем же загрузчиком, что и код ученика, и получают те же (урезанные) права.
+        List<URL> urls = new ArrayList<>();
+        urls.add(classesDir.toURI().toURL());
+        if (args.length > 3 && !args[3].isEmpty()) {
+            for (String jar : args[3].split(File.pathSeparator)) {
+                urls.add(new File(jar).toURI().toURL());
+            }
+        }
+        URLClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), ClassLoader.getPlatformClassLoader());
         Method main = loader.loadClass(mainClassName).getMethod("main", String[].class);
         // Обычный запуск java умеет вызывать main у непубличного класса — разрешаем и мы, пока защита не включена.
         main.setAccessible(true);

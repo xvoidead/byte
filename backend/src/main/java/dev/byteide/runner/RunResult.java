@@ -9,15 +9,16 @@ public record RunResult(
         Integer exitCode,
         List<Diagnostic> diagnostics,
         long compileTimeMs,
-        long runTimeMs) {
+        long runTimeMs,
+        List<OutputFile> files) {
 
     static RunResult compilationFailed(CompilationResult compilation) {
         return new RunResult(RunStatus.COMPILATION_ERROR, "", "", null,
-                compilation.diagnostics(), compilation.timeMs(), 0);
+                compilation.diagnostics(), compilation.timeMs(), 0, List.of());
     }
 
     static RunResult executed(CompilationResult compilation, ExecutionResult execution) {
         return new RunResult(execution.status(), execution.stdout(), execution.stderr(), execution.exitCode(),
-                compilation.diagnostics(), compilation.timeMs(), execution.timeMs());
+                compilation.diagnostics(), compilation.timeMs(), execution.timeMs(), execution.files());
     }
 }

@@ -1,6 +1,7 @@
 package dev.byteide.runner;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -28,11 +29,16 @@ public class ProcessExecutionService {
 
     /** Обычный запуск: весь ввод передаётся сразу, результат — когда программа завершится. */
     public ExecutionResult execute(CompiledProgram program, String stdin) {
-        RunningProgram running = start(program, properties.timeout(), RunningProgram.Listener.NONE, () -> {
-        });
+        return execute(program, ExecutionInput.of(stdin));
+    }
+
+    public ExecutionResult execute(CompiledProgram program, ExecutionInput input) {
+        WorkDir workDir = WorkDir.create(input.workFiles());
+        RunningProgram running = start(program, workDir, properties.timeout(), RunningProgram.Listener.NONE,
+                workDir::close);
         threads.submit(() -> {
-            if (stdin != null && !stdin.isEmpty()) {
-                running.write(stdin);
+            if (!input.stdin().isEmpty()) {
+                running.write(input.stdin());
             }
             running.closeInput();
         });
@@ -45,21 +51,27 @@ public class ProcessExecutionService {
 
     /**
      * Интерактивный запуск: вывод приходит слушателю по мере появления, ввод передаётся через
-     * {@link RunningProgram#write}. Каталог программы удаляется после её завершения.
+     * {@link RunningProgram#write}. Каталоги программы удаляются после её завершения.
      */
-    public RunningProgram startInteractive(CompiledProgram program, RunningProgram.Listener listener) {
-        return start(program, properties.interactiveTimeout(), listener, program::close);
+    public RunningProgram startInteractive(CompiledProgram program, List<ProjectFile> workFiles,
+                                           RunningProgram.Listener listener) {
+        WorkDir workDir = WorkDir.create(workFiles);
+        return start(program, workDir, properties.interactiveTimeout(), listener, () -> {
+            workDir.close();
+            program.close();
+        });
     }
 
-    private RunningProgram start(CompiledProgram program, Duration wallTimeout, RunningProgram.Listener listener,
-                                 Runnable cleanup) {
-        ProcessBuilder builder = new ProcessBuilder(sandbox.command(program)).directory(program.classesDir().toFile());
+    private RunningProgram start(CompiledProgram program, WorkDir workDir, Duration wallTimeout,
+                                 RunningProgram.Listener listener, Runnable cleanup) {
+        ProcessBuilder builder = new ProcessBuilder(sandbox.command(program, workDir.path()))
+                .directory(workDir.path().toFile());
         Map<String, String> env = builder.environment();
         env.clear();
         env.put("LANG", "C.UTF-8");
         RunningProgram.Limits limits = new RunningProgram.Limits(wallTimeout, properties.cpuLimit(),
-                properties.maxOutputChars());
-        return RunningProgram.start(builder, limits, listener, threads, cleanup);
+                properties.maxOutputChars(), properties.maxWorkDirSizeKb() * 1024L, properties.maxWorkDirEntries());
+        return RunningProgram.start(builder, workDir, limits, listener, threads, cleanup);
     }
 
     private static ExecutionResult await(RunningProgram running, Duration timeout) {
