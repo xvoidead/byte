@@ -55,3 +55,36 @@ test('песочница: JSON через Gson, ошибка в другом ф�
   await page.locator('.statusbar-problems').click();
   await expect(page.locator('.file-tab.active')).toContainText('Player.java');
 });
+
+test('урок-проект: примеры с файлами, проверка файлов и эталон', async ({ page, request, baseURL }) => {
+  const problems = watchProblems(page, baseURL);
+  await page.goto('/lessons/default-config');
+  await expect(page.locator('.file-tab-name', { hasText: 'resources/config.yml' })).toBeVisible();
+  const bars = await page.locator('.stepper-bar').count();
+  await page.goto(`/lessons/default-config?step=${bars}`);
+
+  // Примеры показывают файлы до и после запуска.
+  const example = page.locator('.example').nth(1);
+  await expect(example).toContainText('Файлы до запуска');
+  await expect(example).toContainText('Файлы после запуска');
+  await expect(example).toContainText('language: ru');
+
+  // Стартовый код не создаёт конфиг — видно, какой файл ожидался.
+  await page.getByRole('button', { name: 'Проверить' }).click();
+  await expect(page.locator('.tests-panel .run-status')).toContainText('Пройдено тестов');
+  await expect(page.locator('.tests-panel')).toContainText('Файл config.yml: получено');
+  await expect(page.locator('.test-hidden-note').first()).toContainText('файла нет');
+
+  // Эталонное решение: запуск создаёт config.yml во вкладках, проверка проходит.
+  const { files } = await (await request.get('/api/lessons/default-config/solution')).json();
+  await page.evaluate((f) => localStorage.setItem('byte:project:lesson:default-config', JSON.stringify({ files: f, active: 'Main.java' })), files);
+  await page.reload();
+  await expect(page.locator('.monaco-editor .view-lines')).toBeVisible();
+  await page.getByRole('button', { name: 'Запустить' }).click();
+  await expect(page.locator('.term-output')).toContainText('Создан config.yml из настроек по умолчанию');
+  await expect(page.locator('.term-files')).toContainText('создан config.yml');
+  await expect(page.locator('.file-tab-name', { hasText: 'config.yml' })).toHaveCount(2);
+  await page.getByRole('button', { name: 'Проверить' }).click();
+  await expect(page.locator('.tests-panel .run-status.ok')).toBeVisible();
+  expect(problems).toEqual([]);
+});

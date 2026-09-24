@@ -1,0 +1,5 @@
+# Настройки сервера
+server-name: Byte Craft
+max-players: 20
+pvp: true
+language: ru

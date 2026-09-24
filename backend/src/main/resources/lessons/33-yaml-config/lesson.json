@@ -1,0 +1,54 @@
+{
+  "module": "Конфиги",
+  "title": "YAML-конфиг",
+  "summary": "Читаем config.yml через SnakeYAML: словари, списки и типы значений.",
+  "tests": [
+    {
+      "name": "Конфиг из условия",
+      "files": {
+        "config.yml": "# Настройки сервера\nserver-name: Byte Craft\nmax-players: 20\npvp: true\nspawn:\n  x: 100\n  y: 64\nmotd:\n  - Добро пожаловать!\n  - Не ломайте спавн\n"
+      },
+      "expectedOutput": "Сервер: Byte Craft\nИгроков: до 20\nPvP: включён\nСпавн: 100, 64\nСообщения: 2\n- Добро пожаловать!\n- Не ломайте спавн\n",
+      "hidden": false
+    },
+    {
+      "name": "Другой сервер, PvP выключен",
+      "files": {
+        "config.yml": "server-name: Тихая гавань\nmax-players: 8\npvp: false\nspawn:\n  x: -30\n  y: 70\nmotd:\n  - Здесь не дерутся\n"
+      },
+      "expectedOutput": "Сервер: Тихая гавань\nИгроков: до 8\nPvP: выключен\nСпавн: -30, 70\nСообщения: 1\n- Здесь не дерутся\n",
+      "hidden": false
+    },
+    {
+      "name": "Файла нет",
+      "files": {},
+      "expectedOutput": "Нет файла config.yml\n",
+      "hidden": false
+    },
+    {
+      "name": "Ключи в другом порядке, пустой список сообщений",
+      "files": {
+        "config.yml": "motd: []\nspawn: {x: 0, y: 0}\npvp: yes\nmax-players: 1000\nserver-name: Мега\n"
+      },
+      "expectedOutput": "Сервер: Мега\nИгроков: до 1000\nPvP: включён\nСпавн: 0, 0\nСообщения: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Неполный конфиг: нет сообщений",
+      "files": {
+        "config.yml": "server-name: Без приветствия\nmax-players: 3\npvp: off\nspawn:\n  x: 5\n  y: 6\n"
+      },
+      "expectedOutput": "Сервер: Без приветствия\nИгроков: до 3\nPvP: выключен\nСпавн: 5, 6\nСообщения: 0\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Весь файл читается одной строкой: `Files.readString(Path.of(\"config.yml\"))`. Её и передайте в `new Yaml().load(...)` — получится `Map<String, Object>`.",
+    "Значения в словаре имеют тип `Object`, их нужно привести: `(Integer) config.get(\"max-players\")`, `(Boolean) config.get(\"pvp\")`. Раздел `spawn` — это вложенный `Map<String, Object>`, а `motd` — `List<String>`.",
+    "Если ключа `motd` нет, `get` вернёт `null`. Возьмите `config.getOrDefault(\"motd\", List.of())` — тогда пустой список сработает сам собой."
+  ],
+  "requirements": [
+    { "type": "call", "name": "load", "message": "Разберите файл через SnakeYAML: new Yaml().load(...)." },
+    { "type": "forbidLiteral", "values": ["Byte Craft", "Добро пожаловать!"], "message": "Не пишите значения из конфига в коде — берите их из файла." }
+  ]
+}

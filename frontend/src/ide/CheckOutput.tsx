@@ -24,6 +24,8 @@ export function CheckOutput({
   const passed = result.tests.filter((t) => t.passed).length;
   const testsPassed = passed === result.tests.length;
   const failedRequirements = result.requirements.filter((r) => !r.passed);
+  // В заданиях с файлами скрытые тесты обычно подкладывают неполный или сломанный файл.
+  const withFiles = result.tests.some((t) => t.files);
   return (
     <div className="run-output">
       <div className={`run-status ${result.passed ? 'ok' : 'fail'}`}>
@@ -45,14 +47,14 @@ export function CheckOutput({
       )}
       <ul className="tests">
         {result.tests.map((test, i) => (
-          <TestItem key={i} test={test} index={i + 1} />
+          <TestItem key={i} test={test} index={i + 1} withFiles={withFiles} />
         ))}
       </ul>
     </div>
   );
 }
 
-function TestItem({ test, index }: { test: TestOutcome; index: number }) {
+function TestItem({ test, index, withFiles }: { test: TestOutcome; index: number; withFiles: boolean }) {
   return (
     <li className={`test ${test.passed ? 'ok' : 'fail'}`} style={{ '--i': index - 1 } as CSSProperties}>
       <div className="test-head">
@@ -96,8 +98,9 @@ function TestItem({ test, index }: { test: TestOutcome; index: number }) {
       )}
       {!test.passed && test.hidden && (
         <p className="test-hidden-note">
-          Данные скрытого теста не показываются. Подумайте о граничных случаях: минимальные и максимальные значения,
-          отрицательные числа, пустой ввод.
+          {withFiles
+            ? 'Данные скрытого теста не показываются. Подумайте, что будет, если файла нет, он пустой или повреждён, в нём не хватает ключей или есть лишние.'
+            : 'Данные скрытого теста не показываются. Подумайте о граничных случаях: минимальные и максимальные значения, отрицательные числа, пустой ввод.'}
         </p>
       )}
     </li>

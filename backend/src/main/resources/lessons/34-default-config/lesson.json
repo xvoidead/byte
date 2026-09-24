@@ -1,0 +1,82 @@
+{
+  "module": "Конфиги",
+  "title": "Значения по умолчанию",
+  "summary": "Создаём конфиг из ресурсов и дописываем недостающие ключи, не трогая остальные.",
+  "tests": [
+    {
+      "name": "Конфига нет — создаётся из ресурсов",
+      "files": {},
+      "expectedOutput": "Создан config.yml из настроек по умолчанию\nКонфиг в порядке\nСервер Byte Craft, мест: 20\n",
+      "expectedFiles": {
+        "config.yml": "# Настройки сервера\nserver-name: Byte Craft\nmax-players: 20\npvp: true\nlanguage: ru\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Не хватает двух ключей",
+      "files": {
+        "config.yml": "server-name: Тихая гавань\nmax-players: 8\n"
+      },
+      "expectedOutput": "Добавлены ключи: pvp, language\nСервер Тихая гавань, мест: 8\n",
+      "expectedFiles": {
+        "config.yml": "server-name: Тихая гавань\nmax-players: 8\npvp: true\nlanguage: ru\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Все ключи на месте — файл не меняется",
+      "files": {
+        "config.yml": "# мой сервер\nserver-name: Мега\nmax-players: 100\npvp: false\nlanguage: en\n"
+      },
+      "expectedOutput": "Конфиг в порядке\nСервер Мега, мест: 100\n",
+      "expectedFiles": {
+        "config.yml": "# мой сервер\nserver-name: Мега\nmax-players: 100\npvp: false\nlanguage: en\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Лишние ключи ученика сохраняются",
+      "files": {
+        "config.yml": "language: de\nwhitelist:\n  - Ann\n  - Bob\nmax-players: 5\n"
+      },
+      "expectedOutput": "Добавлены ключи: server-name, pvp\nСервер Byte Craft, мест: 5\n",
+      "expectedFiles": {
+        "config.yml": "language: de\nwhitelist:\n- Ann\n- Bob\nmax-players: 5\nserver-name: Byte Craft\npvp: true\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Пустой конфиг",
+      "files": {
+        "config.yml": ""
+      },
+      "expectedOutput": "Добавлены ключи: server-name, max-players, pvp, language\nСервер Byte Craft, мест: 20\n",
+      "expectedFiles": {
+        "config.yml": "server-name: Byte Craft\nmax-players: 20\npvp: true\nlanguage: ru\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Ложное значение не считается пропущенным",
+      "files": {
+        "config.yml": "server-name: Ноль\nmax-players: 0\npvp: false\n"
+      },
+      "expectedOutput": "Добавлены ключи: language\nСервер Ноль, мест: 0\n",
+      "expectedFiles": {
+        "config.yml": "server-name: Ноль\nmax-players: 0\npvp: false\nlanguage: ru\n"
+      },
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Ресурс читается через `Main.class.getResourceAsStream(\"/config.yml\")`, а `Files.copy(in, FILE)` запишет его в файл как есть — вместе с комментариями.",
+    "Пройдите по `loadDefaults().entrySet()` и для каждого ключа, которого нет в конфиге (`!config.containsKey(key)`), положите значение по умолчанию и запомните имя ключа в список.",
+    "Файл пустой — `load` вернёт `null`. Начните тогда с пустого `LinkedHashMap`: он сохраняет порядок ключей, и новые ключи окажутся в конце файла.",
+    "Записывайте файл методом `save` только если список добавленных ключей не пуст — иначе комментарии ученика пропадут."
+  ],
+  "requirements": [
+    { "type": "call", "name": "getResourceAsStream", "message": "Берите настройки по умолчанию из ресурсов через getResourceAsStream." },
+    { "type": "call", "name": "Files.copy", "message": "Скопируйте конфиг из ресурсов целиком через Files.copy — так сохранятся комментарии." },
+    { "type": "forbidLiteral", "values": ["Byte Craft", "language"], "message": "Не перечисляйте ключи и значения по умолчанию в коде — берите их из resources/config.yml." }
+  ]
+}

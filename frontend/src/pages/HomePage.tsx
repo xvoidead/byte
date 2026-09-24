@@ -67,7 +67,7 @@ export function HomePage() {
         <Reveal className="section-head">
           <div>
             <h2 className="section-title">Программа курса</h2>
-            <p className="section-lead">32 урока: от первой строки кода до Stream API и собственных проектов.</p>
+            <p className="section-lead">37 уроков: от первой строки кода до Stream API, собственных проектов и работы с конфигами.</p>
           </div>
           {list.length > 0 && (
             <div className="progress" aria-label={`Пройдено ${completed} из ${list.length}`}>

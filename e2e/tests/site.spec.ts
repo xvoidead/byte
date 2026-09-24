@@ -5,8 +5,8 @@ test('главная показывает весь курс', async ({ page, bas
   const problems = watchProblems(page, baseURL);
   await page.goto('/');
   await expect(page.locator('h1')).toBeVisible();
-  await expect(page.locator('.lesson-row')).toHaveCount(32);
-  await expect(page.locator('.module')).toHaveCount(8);
+  await expect(page.locator('.lesson-row')).toHaveCount(37);
+  await expect(page.locator('.module')).toHaveCount(9);
   await page.locator('.lesson-row').first().click();
   await expect(page).toHaveURL(/\/lessons\/hello-world/);
   await expect(page.locator('.stepper')).toBeVisible();

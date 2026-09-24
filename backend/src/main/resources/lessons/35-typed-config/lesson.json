@@ -1,0 +1,92 @@
+{
+  "module": "Конфиги",
+  "title": "Типизированный конфиг",
+  "summary": "Превращаем конфиг в record, проверяем значения и выдаём понятные ошибки.",
+  "tests": [
+    {
+      "name": "Правильный конфиг",
+      "files": {
+        "config.yml": "server-name: Byte Craft\nmax-players: 20\ndifficulty: normal\nspawn-protection: 16\n"
+      },
+      "expectedOutput": "Сервер: Byte Craft\nИгроков: до 20\nСложность: normal\nЗащита спавна: 16\n",
+      "hidden": false
+    },
+    {
+      "name": "Ноль игроков",
+      "files": {
+        "config.yml": "server-name: Byte Craft\nmax-players: 0\ndifficulty: hard\nspawn-protection: 4\n"
+      },
+      "expectedOutput": "Ошибки в config.yml:\n- max-players должен быть больше 0\n",
+      "hidden": false
+    },
+    {
+      "name": "Необязательный ключ пропущен",
+      "files": {
+        "config.yml": "server-name: Тихая гавань\nmax-players: 8\ndifficulty: PEACEFUL\n"
+      },
+      "expectedOutput": "Сервер: Тихая гавань\nИгроков: до 8\nСложность: peaceful\nЗащита спавна: 16\n",
+      "hidden": false
+    },
+    {
+      "name": "Сломанный YAML",
+      "files": {
+        "config.yml": "server-name: [Byte Craft\nmax-players: 20\n"
+      },
+      "expectedOutput": "Ошибки в config.yml:\n- файл не читается как YAML\n",
+      "hidden": false
+    },
+    {
+      "name": "Все ошибки сразу",
+      "files": {
+        "config.yml": "server-name: '  '\nmax-players: двадцать\ndifficulty: hardcore\nspawn-protection: -1\n"
+      },
+      "expectedOutput": "Ошибки в config.yml:\n- server-name не задан\n- max-players должен быть целым числом\n- difficulty должен быть одним из: peaceful, easy, normal, hard\n- spawn-protection не может быть отрицательным\n",
+      "hidden": true
+    },
+    {
+      "name": "Дробное число и число в кавычках",
+      "files": {
+        "config.yml": "server-name: Мега\nmax-players: 20.5\ndifficulty: Easy\nspawn-protection: '8'\n"
+      },
+      "expectedOutput": "Ошибки в config.yml:\n- max-players должен быть целым числом\n- spawn-protection должен быть целым числом\n",
+      "hidden": true
+    },
+    {
+      "name": "Пустой файл",
+      "files": { "config.yml": "" },
+      "expectedOutput": "Ошибки в config.yml:\n- server-name не задан\n- max-players не задан\n- difficulty не задан\n",
+      "hidden": true
+    },
+    {
+      "name": "Не словарь",
+      "files": { "config.yml": "просто текст\n" },
+      "expectedOutput": "Ошибки в config.yml:\n- файл не читается как YAML\n",
+      "hidden": true
+    },
+    {
+      "name": "Файла нет",
+      "files": {},
+      "expectedOutput": "Ошибки в config.yml:\n- файл не найден\n",
+      "hidden": true
+    },
+    {
+      "name": "Граничные значения",
+      "files": {
+        "config.yml": "server-name: 42\nmax-players: 1\ndifficulty: hard\nspawn-protection: 0\n"
+      },
+      "expectedOutput": "Сервер: 42\nИгроков: до 1\nСложность: hard\nЗащита спавна: 0\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Сначала `load`: если `Files.exists(file)` ложно — `throw new ConfigException(List.of(\"файл не найден\"))`. Вызов `new Yaml().load(...)` оберните в `try` и ловите `YAMLException`. Результат сохраните в `Object` и проверьте `instanceof Map`, а `null` (пустой файл) считайте пустым словарём.",
+    "В `from` заведите `List<String> errors` и не бросайте исключение на первой же ошибке: проверьте все ключи по очереди, а в конце, если список не пуст, — `throw new ConfigException(errors)`.",
+    "Для чисел удобно написать метод `Integer integer(map, key, defaultValue, errors)`: `null` в конфиге — ошибка «не задан» или значение по умолчанию; `value instanceof Integer n` — всё хорошо; иначе — «должен быть целым числом».",
+    "`Difficulty.valueOf(text.toUpperCase())` бросает `IllegalArgumentException`, если такой константы нет. Название сервера берите через `toString().strip()` — так сработает и `server-name: 42`."
+  ],
+  "requirements": [
+    { "type": "class", "name": "ServerConfig", "kind": "record", "message": "Храните настройки в record ServerConfig." },
+    { "type": "uses", "construct": "throw", "message": "Сообщайте об ошибках исключением ConfigException." },
+    { "type": "uses", "construct": "try", "message": "Перехватите ошибку разбора YAML — программа не должна падать на сломанном файле." }
+  ]
+}

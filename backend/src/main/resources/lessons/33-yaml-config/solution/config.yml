@@ -1,0 +1,10 @@
+# Настройки сервера
+server-name: Byte Craft
+max-players: 20
+pvp: true
+spawn:
+  x: 100
+  y: 64
+motd:
+  - Добро пожаловать!
+  - Не ломайте спавн

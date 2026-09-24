@@ -1,0 +1,88 @@
+{
+  "module": "Конфиги",
+  "title": "JSON и Gson",
+  "summary": "Сохраняем и загружаем игроков в JSON: Gson, TypeToken и красивый вывод.",
+  "tests": [
+    {
+      "name": "Данные из файла",
+      "stdin": "score Боб 70\nadd Ева\ntop\n",
+      "files": {
+        "players.json": "[\n  {\n    \"name\": \"Ада\",\n    \"score\": 100\n  },\n  {\n    \"name\": \"Боб\",\n    \"score\": 40\n  }\n]\n"
+      },
+      "expectedOutput": "Боб: 110\nДобавлен Ева\n1. Боб — 110\n2. Ада — 100\n3. Ева — 0\nСохранено игроков: 3\n",
+      "expectedFiles": {
+        "players.json": "[\n  {\n    \"name\": \"Ада\",\n    \"score\": 100\n  },\n  {\n    \"name\": \"Боб\",\n    \"score\": 110\n  },\n  {\n    \"name\": \"Ева\",\n    \"score\": 0\n  }\n]"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Файла нет — начинаем с пустого списка",
+      "stdin": "add Ада\nscore Ада 5\n",
+      "files": {},
+      "expectedOutput": "Добавлен Ада\nАда: 5\nСохранено игроков: 1\n",
+      "expectedFiles": {
+        "players.json": "[\n  {\n    \"name\": \"Ада\",\n    \"score\": 5\n  }\n]"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Повреждённый файл не перезаписывается",
+      "stdin": "add Ева\n",
+      "files": {
+        "players.json": "[{\"name\": \"Ада\", \"sco"
+      },
+      "expectedOutput": "Файл players.json повреждён\n",
+      "expectedFiles": {
+        "players.json": "[{\"name\": \"Ада\", \"sco"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Повторы, неизвестный игрок, пустой топ",
+      "stdin": "top\nadd Ада\nadd Ада\nscore Боб 3\nscore Ада -2\n",
+      "files": { "players.json": "[]" },
+      "expectedOutput": "Игроков нет\nДобавлен Ада\nАда уже есть\nНет игрока Боб\nАда: -2\nСохранено игроков: 1\n",
+      "expectedFiles": {
+        "players.json": "[\n  {\n    \"name\": \"Ада\",\n    \"score\": -2\n  }\n]"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Сжатый JSON без очков у игрока",
+      "stdin": "top\n",
+      "files": { "players.json": "[{\"name\":\"Ада\"},{\"name\":\"Боб\",\"score\":7}]" },
+      "expectedOutput": "1. Боб — 7\n2. Ада — 0\nСохранено игроков: 2\n",
+      "expectedFiles": {
+        "players.json": "[\n  {\n    \"name\": \"Ада\",\n    \"score\": 0\n  },\n  {\n    \"name\": \"Боб\",\n    \"score\": 7\n  }\n]"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Объект вместо списка",
+      "stdin": "top\n",
+      "files": { "players.json": "{\"name\": \"Ада\", \"score\": 1}" },
+      "expectedOutput": "Файл players.json повреждён\n",
+      "expectedFiles": { "players.json": "{\"name\": \"Ада\", \"score\": 1}" },
+      "hidden": true
+    },
+    {
+      "name": "Пустой файл",
+      "stdin": "",
+      "files": { "players.json": "" },
+      "expectedOutput": "Сохранено игроков: 0\n",
+      "expectedFiles": { "players.json": "[]" },
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Для списка нужен тип с параметром: `Type type = new TypeToken<List<Player>>() {}.getType();`, затем `gson.fromJson(Files.readString(FILE), type)`. Без него Gson не узнает, что внутри — игроки.",
+    "Красивый вывод включается при создании: `new GsonBuilder().setPrettyPrinting().create()`. Используйте этот объект и для чтения, и для записи.",
+    "Если JSON сломан, `fromJson` бросит `JsonSyntaxException` — он наследник `JsonParseException`. Оберните вызов `load()` в `try`, выведите сообщение и сделайте `return` до `save`.",
+    "Пустой файл `fromJson` превращает в `null`. Верните тогда пустой `ArrayList` — и заверните результат в `new ArrayList<>(...)`, чтобы в список точно можно было добавлять."
+  ],
+  "requirements": [
+    { "type": "uses", "construct": "new", "name": "TypeToken", "message": "Прочитайте список через TypeToken<List<Player>>." },
+    { "type": "call", "name": "setPrettyPrinting", "message": "Сохраняйте JSON красиво: GsonBuilder().setPrettyPrinting()." },
+    { "type": "class", "name": "Player", "kind": "record", "message": "Оставьте игрока record Player." }
+  ]
+}

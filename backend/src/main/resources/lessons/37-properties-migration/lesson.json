@@ -1,0 +1,109 @@
+{
+  "module": "Конфиги",
+  "title": ".properties и версия конфига",
+  "summary": "Класс Properties, поле config-version и перенос старого конфига на новую версию.",
+  "tests": [
+    {
+      "name": "Старый конфиг версии 1",
+      "files": {
+        "server.properties": "# Старый конфиг: версии нет, значит это версия 1\nname=Byte Craft\nslots=20\npvp=yes\n"
+      },
+      "expectedOutput": "Миграция 1 → 2\nМиграция 2 → 3\nКонфиг обновлён до версии 3\nСервер: Byte Craft, мест: 20, PvP: да, дальность: 10\n",
+      "expectedFiles": {
+        "server.properties": "config-version=3\nmax-players=20\npvp=true\nserver-name=Byte Craft\nview-distance=10\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Версия 2",
+      "files": {
+        "server.properties": "config-version=2\nserver-name=Byte Craft\nmax-players=50\npvp=no\n"
+      },
+      "expectedOutput": "Миграция 2 → 3\nКонфиг обновлён до версии 3\nСервер: Byte Craft, мест: 50, PvP: нет, дальность: 10\n",
+      "expectedFiles": {
+        "server.properties": "config-version=3\nmax-players=50\npvp=false\nserver-name=Byte Craft\nview-distance=10\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Актуальный конфиг не меняется",
+      "files": {
+        "server.properties": "# мой сервер\nconfig-version=3\nserver-name=Мега\nmax-players=100\npvp=true\nview-distance=12\n"
+      },
+      "expectedOutput": "Конфиг актуален (версия 3)\nСервер: Мега, мест: 100, PvP: да, дальность: 12\n",
+      "expectedFiles": {
+        "server.properties": "# мой сервер\nconfig-version=3\nserver-name=Мега\nmax-players=100\npvp=true\nview-distance=12\n"
+      },
+      "hidden": false
+    },
+    {
+      "name": "Кириллица, пробелы и лишние ключи",
+      "files": {
+        "server.properties": "name = Тихая гавань\nslots = 8\npvp=no\nmotd=Добро пожаловать\n"
+      },
+      "expectedOutput": "Миграция 1 → 2\nМиграция 2 → 3\nКонфиг обновлён до версии 3\nСервер: Тихая гавань, мест: 8, PvP: нет, дальность: 10\n",
+      "expectedFiles": {
+        "server.properties": "config-version=3\nmax-players=8\nmotd=Добро пожаловать\npvp=false\nserver-name=Тихая гавань\nview-distance=10\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Версия 2 с дальностью и без pvp",
+      "files": {
+        "server.properties": "config-version=2\nserver-name=Байт\nmax-players=4\nview-distance=6\n"
+      },
+      "expectedOutput": "Миграция 2 → 3\nКонфиг обновлён до версии 3\nСервер: Байт, мест: 4, PvP: нет, дальность: 6\n",
+      "expectedFiles": {
+        "server.properties": "config-version=3\nmax-players=4\npvp=false\nserver-name=Байт\nview-distance=6\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Конфиг из будущего",
+      "files": {
+        "server.properties": "config-version=5\nserver-name=Новый\n"
+      },
+      "expectedOutput": "Версия конфига 5 новее программы (3)\n",
+      "expectedFiles": {
+        "server.properties": "config-version=5\nserver-name=Новый\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Сломанная версия",
+      "files": {
+        "server.properties": "config-version=три\nserver-name=Байт\n"
+      },
+      "expectedOutput": "config-version должен быть целым числом больше 0\n",
+      "expectedFiles": {
+        "server.properties": "config-version=три\nserver-name=Байт\n"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Нулевая версия",
+      "files": { "server.properties": "config-version=0\n" },
+      "expectedOutput": "config-version должен быть целым числом больше 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Файла нет",
+      "files": {},
+      "expectedOutput": "Нет файла server.properties\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Читайте файл через `Reader`, чтобы не пострадала кириллица: `try (Reader reader = Files.newBufferedReader(FILE)) { props.load(reader); }`.",
+    "Версия: `Integer.parseInt(props.getProperty(\"config-version\", \"1\").strip())`. Поймайте `NumberFormatException` и не забудьте про версии меньше 1 и больше `CURRENT_VERSION`.",
+    "Миграции применяются по очереди в цикле `while (version < CURRENT_VERSION)`: напечатайте строку `Миграция N → N+1`, вызовите нужный метод (`switch (version)`) и увеличьте `version`.",
+    "Переименование ключа: `String value = (String) props.remove(\"name\");` — и если `value != null`, `props.setProperty(\"server-name\", value)`. После всех миграций запишите `config-version=3` и вызовите `save`."
+  ],
+  "requirements": [
+    { "type": "uses", "construct": "new", "name": "Properties", "message": "Читайте конфиг классом Properties." },
+    { "type": "method", "name": "migrateTo2", "message": "Опишите миграцию 1 → 2 в методе migrateTo2." },
+    { "type": "method", "name": "migrateTo3", "message": "Опишите миграцию 2 → 3 в методе migrateTo3." },
+    { "type": "loop", "message": "Применяйте миграции по очереди в цикле." },
+    { "type": "forbidLiteral", "values": ["Byte Craft"], "message": "Берите значения из файла, а не из кода." }
+  ]
+}

@@ -28,7 +28,7 @@ class ApiTest {
     void listsLessons() throws Exception {
         mvc.perform(get("/api/lessons"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(32)))
+                .andExpect(jsonPath("$", hasSize(37)))
                 .andExpect(jsonPath("$[0].slug").value("hello-world"))
                 .andExpect(jsonPath("$[0].theory").doesNotExist());
     }
