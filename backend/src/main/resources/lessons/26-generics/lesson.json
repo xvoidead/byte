@@ -1,0 +1,59 @@
+{
+  "module": "Коллекции",
+  "title": "Обобщения (generics)",
+  "summary": "Классы и методы, которые работают с любым типом, и зачем нужны угловые скобки.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "(a[b]{c})\n(]\n((\n",
+      "expectedOutput": "OK\nОшибка в позиции 2\nНе закрыто скобок: 2\n",
+      "hidden": false
+    },
+    {
+      "name": "Без скобок",
+      "stdin": "просто текст\n\n",
+      "expectedOutput": "OK\nOK\n",
+      "hidden": false
+    },
+    {
+      "name": "Закрывающая в начале",
+      "stdin": "}{\n",
+      "expectedOutput": "Ошибка в позиции 1\n",
+      "hidden": true
+    },
+    {
+      "name": "Перекрёстные скобки",
+      "stdin": "([)]\n",
+      "expectedOutput": "Ошибка в позиции 3\n",
+      "hidden": true
+    },
+    {
+      "name": "Длинная вложенность",
+      "stdin": "{[(x)]}((([[]])))\n{[}\n",
+      "expectedOutput": "OK\nОшибка в позиции 3\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Внутри `Stack` храните элементы в `ArrayList`: `push` — это `items.add(item)`, `pop` — `items.remove(items.size() - 1)`.",
+    "Открывающую скобку кладите в стек. Встретив закрывающую, снимите верхнюю открывающую и проверьте, что она того же вида.",
+    "Если стек пуст, когда пришла закрывающая, — это тоже ошибка. После цикла размер стека — число незакрытых скобок."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "Stack",
+      "message": "Напишите свой обобщённый класс Stack<T>."
+    },
+    {
+      "type": "avoid",
+      "construct": "new",
+      "name": "ArrayDeque",
+      "message": "Используйте свой класс Stack, а не готовые из java.util."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..5:{repeat:0..12:{choice:(|)|[|]|x}}\n}"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "module": "Массивы, строки и методы",
+  "title": "Символы и шифр Цезаря",
+  "summary": "Тип char — это число: арифметика символов и простейшее шифрование.",
+  "tests": [
+    {
+      "name": "Сдвиг на 3",
+      "stdin": "3\nHello, World!\n",
+      "expectedOutput": "Khoor, Zruog!\n",
+      "hidden": false
+    },
+    {
+      "name": "Сдвиг назад",
+      "stdin": "-1\nabc XYZ\n",
+      "expectedOutput": "zab WXY\n",
+      "hidden": false
+    },
+    {
+      "name": "Полный круг",
+      "stdin": "26\nSame text\n",
+      "expectedOutput": "Same text\n",
+      "hidden": true
+    },
+    {
+      "name": "Большой сдвиг",
+      "stdin": "1000\nJava 21\n",
+      "expectedOutput": "Vmhm 21\n",
+      "hidden": true
+    },
+    {
+      "name": "Большой отрицательный сдвиг",
+      "stdin": "-27\na z A Z\n",
+      "expectedOutput": "z y Z Y\n",
+      "hidden": true
+    },
+    {
+      "name": "Кириллица не меняется",
+      "stdin": "5\nПривет, Java!\n",
+      "expectedOutput": "Привет, Ofaf!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Проверьте, в каком диапазоне символ: `c >= 'a' && c <= 'z'` — строчная латинская, `c >= 'A' && c <= 'Z'` — заглавная.",
+    "Номер буквы в алфавите — `c - 'a'`. Сдвинутый номер — `Math.floorMod(c - 'a' + k, 26)`: он всегда от 0 до 25, даже при отрицательном `k`.",
+    "Верните символ обратно: `(char) ('a' + номер)`. Для заглавных всё то же самое, только от `'A'`."
+  ],
+  "requirements": [
+    {
+      "type": "method",
+      "name": "shift",
+      "returns": "char",
+      "params": [
+        "char",
+        "int"
+      ],
+      "message": "Сдвиг буквы должен быть в методе static char shift(char c, int k)."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{int:-1000..1000}\n{mixcase:{words:1..8:hello|world|java|code|byte|zebra|xyz|abc}} 42!\n"
+  }
+}

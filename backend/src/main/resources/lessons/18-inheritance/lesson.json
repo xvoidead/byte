@@ -1,0 +1,60 @@
+{
+  "module": "Объекты и классы",
+  "title": "Наследование",
+  "summary": "Общий код в родительском классе, переопределение методов и абстрактные классы.",
+  "tests": [
+    {
+      "name": "Три фигуры",
+      "stdin": "circle 1\nrectangle 2 3\nsquare 4\n",
+      "expectedOutput": "Круг: 3.14\nПрямоугольник: 6.00\nКвадрат: 16.00\nОбщая площадь: 25.14\n",
+      "hidden": false
+    },
+    {
+      "name": "Один круг",
+      "stdin": "circle 10\n",
+      "expectedOutput": "Круг: 314.16\nОбщая площадь: 314.16\n",
+      "hidden": false
+    },
+    {
+      "name": "Только квадраты",
+      "stdin": "square 1\nsquare 2\nsquare 3\n",
+      "expectedOutput": "Квадрат: 1.00\nКвадрат: 4.00\nКвадрат: 9.00\nОбщая площадь: 14.00\n",
+      "hidden": true
+    },
+    {
+      "name": "Смешанный набор",
+      "stdin": "rectangle 7 9\ncircle 3\nsquare 12\nrectangle 1 100\n",
+      "expectedOutput": "Прямоугольник: 63.00\nКруг: 28.27\nКвадрат: 144.00\nПрямоугольник: 100.00\nОбщая площадь: 335.27\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Храните размеры в приватных полях и заполняйте их в конструкторе: `this.radius = radius;`.",
+    "Площадь круга — `Math.PI * r * r`, прямоугольника — `width * height`. Не забудьте `@Override`.",
+    "Квадрату не нужна своя площадь: в конструкторе вызовите `super(side, side)` и переопределите только `name()`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "Circle",
+      "superclass": "Shape",
+      "message": "Circle наследуется от Shape."
+    },
+    {
+      "type": "class",
+      "name": "Rectangle",
+      "superclass": "Shape",
+      "message": "Rectangle наследуется от Shape."
+    },
+    {
+      "type": "class",
+      "name": "Square",
+      "superclass": "Rectangle",
+      "message": "Square наследуется от Rectangle — квадрат это прямоугольник."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..6:{choice:circle {int:1..20}|rectangle {int:1..20} {int:1..20}|square {int:1..20}}\n}"
+  }
+}

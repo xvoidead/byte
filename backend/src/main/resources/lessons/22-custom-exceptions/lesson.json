@@ -1,0 +1,59 @@
+{
+  "module": "Надёжный код",
+  "title": "Свои исключения",
+  "summary": "Как сообщать об ошибках из своего кода: throw и собственные классы исключений.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "open Аня\nopen Боря\ndeposit Аня 500\ntransfer Аня Боря 200\nbalance Аня\nbalance Боря\nwithdraw Боря 300\nbalance Вика\n",
+      "expectedOutput": "Аня: 300\nБоря: 200\nОшибка: недостаточно средств на счёте Боря\nОшибка: счёт Вика не найден\n",
+      "hidden": false
+    },
+    {
+      "name": "Повторное открытие и отрицательная сумма",
+      "stdin": "open Аня\nopen Аня\ndeposit Аня -5\nbalance Аня\n",
+      "expectedOutput": "Ошибка: счёт Аня уже существует\nОшибка: сумма должна быть положительной\nАня: 0\n",
+      "hidden": false
+    },
+    {
+      "name": "Перевод на несуществующий счёт не списывает деньги",
+      "stdin": "open Аня\ndeposit Аня 100\ntransfer Аня Гена 50\nbalance Аня\n",
+      "expectedOutput": "Ошибка: счёт Гена не найден\nАня: 100\n",
+      "hidden": true
+    },
+    {
+      "name": "Порядок проверок",
+      "stdin": "transfer Гена Вика 0\ntransfer Гена Вика 10\nopen Вика\ntransfer Вика Гена 10\ntransfer Вика Вика 10\n",
+      "expectedOutput": "Ошибка: сумма должна быть положительной\nОшибка: счёт Гена не найден\nОшибка: счёт Гена не найден\nОшибка: недостаточно средств на счёте Вика\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Исключения объявляются как обычные классы: `class InsufficientFundsException extends BankException` с конструктором, который вызывает `super(сообщение)`.",
+    "Заведите в `Bank` вспомогательный метод, который находит баланс или бросает `AccountNotFoundException`, — он пригодится во всех командах.",
+    "В `transfer` проверьте сумму и оба счёта **до** того, как менять балансы, иначе при ошибке деньги спишутся, но никуда не придут."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "AccountNotFoundException",
+      "superclass": "BankException",
+      "message": "AccountNotFoundException наследуется от BankException."
+    },
+    {
+      "type": "class",
+      "name": "InsufficientFundsException",
+      "superclass": "BankException",
+      "message": "InsufficientFundsException наследуется от BankException."
+    },
+    {
+      "type": "uses",
+      "construct": "throw",
+      "message": "Сообщайте об ошибках через throw."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..3:open {choice:Аня|Боря|Вика}\n}{repeat:3..15:{choice:deposit {choice:Аня|Боря|Вика|Гена} {int:-50..500}|withdraw {choice:Аня|Боря|Вика|Гена} {int:-50..500}|transfer {choice:Аня|Боря|Вика|Гена} {choice:Аня|Боря|Вика|Гена} {int:-50..500}|balance {choice:Аня|Боря|Вика|Гена}}\n}"
+  }
+}

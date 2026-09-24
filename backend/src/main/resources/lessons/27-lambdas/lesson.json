@@ -1,0 +1,52 @@
+{
+  "module": "Современная Java",
+  "title": "Лямбда-выражения",
+  "summary": "Функции как значения: короткая запись поведения, функциональные интерфейсы и ссылки на методы.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "3 4\nadd\npow\nfoo\n",
+      "expectedOutput": "add: 7\npow: 81\nfoo: неизвестная операция\n",
+      "hidden": false
+    },
+    {
+      "name": "Все операции",
+      "stdin": "-7 2\nadd\nsub\nmul\nmax\nmin\npow\n",
+      "expectedOutput": "add: -5\nsub: -9\nmul: -14\nmax: 2\nmin: -7\npow: 49\n",
+      "hidden": false
+    },
+    {
+      "name": "Степень ноль",
+      "stdin": "100 0\npow\nmul\n",
+      "expectedOutput": "pow: 1\nmul: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Большая степень",
+      "stdin": "-100 9\npow\nsub\n",
+      "expectedOutput": "pow: -1000000000000000000\nsub: -109\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Каждая операция — одна строка: `operations.put(\"add\", (x, y) -> x + y);`.",
+    "Для `max` и `min` подойдут ссылки на методы: `Math::max` и `Math::min`.",
+    "Степень посчитайте лямбдой с блоком: заведите `long result = 1` и умножьте его на `x` в цикле `y` раз. Неизвестную операцию узнаете по `operations.get(name) == null`."
+  ],
+  "requirements": [
+    {
+      "type": "uses",
+      "construct": "lambda",
+      "message": "Опишите операции лямбдами или ссылками на методы."
+    },
+    {
+      "type": "avoid",
+      "construct": "switch",
+      "message": "Выбирайте операцию через Map, без switch."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{int:-100..100} {int:0..9}\n{repeat:1..8:{choice:add|sub|mul|max|min|pow|div}\n}"
+  }
+}

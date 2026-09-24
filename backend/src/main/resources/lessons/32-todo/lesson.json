@@ -1,0 +1,47 @@
+{
+  "module": "Проекты",
+  "title": "Проект: менеджер задач",
+  "summary": "Итоговый проект курса: классы, коллекции и разбор команд в одной программе.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "add купить хлеб\nadd позвонить маме\ndone 1\nlist\nremove 3\nstats\n",
+      "expectedOutput": "Добавлена задача 1\nДобавлена задача 2\n1. [x] купить хлеб\n2. [ ] позвонить маме\nЗадача 3 не найдена\nВыполнено: 1 из 2\n",
+      "hidden": false
+    },
+    {
+      "name": "Пустой список",
+      "stdin": "list\nstats\n",
+      "expectedOutput": "Список пуст\nВыполнено: 0 из 0\n",
+      "hidden": false
+    },
+    {
+      "name": "Номера не переиспользуются",
+      "stdin": "add a\nadd b\nremove 1\nadd c\nlist\nundo 2\ndone 3\nlist\n",
+      "expectedOutput": "Добавлена задача 1\nДобавлена задача 2\nУдалена задача 1\nДобавлена задача 3\n2. [ ] b\n3. [ ] c\n2. [ ] b\n3. [x] c\n",
+      "hidden": true
+    },
+    {
+      "name": "Ошибки ввода",
+      "stdin": "add\ndone abc\nremove\nfly\nadd   задача с пробелами  \nlist\n",
+      "expectedOutput": "Пустая задача\nЗадача abc не найдена\nУкажите номер задачи\nНеизвестная команда: fly\nДобавлена задача 1\n1. [ ] задача с пробелами\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Храните задачи в `TreeMap<Integer, Task>` и заведите счётчик `nextId`, который только растёт.",
+    "Для `done`, `undo` и `remove` удобно написать один метод поиска: он пробует `Integer.parseInt`, ищет задачу и, если не нашёл (или номер не число), печатает «Задача N не найдена».",
+    "Строку задачи удобно собрать в `toString()` класса `Task`: `id + \". [\" + (done ? \"x\" : \" \") + \"] \" + title`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "Task",
+      "message": "Опишите задачу классом Task."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:2..15:{choice:add {words:1..3:купить|хлеб|позвонить|маме|java|урок}|done {int:0..6}|undo {int:0..6}|remove {int:0..6}|list|stats|done x}\n}list\nstats\n"
+  }
+}

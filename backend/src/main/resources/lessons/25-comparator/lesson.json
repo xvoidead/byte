@@ -1,0 +1,47 @@
+{
+  "module": "Коллекции",
+  "title": "Сортировка объектов: Comparator",
+  "summary": "Сортируем объекты по любым правилам: по одному полю, по нескольким, по убыванию.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "Аня 90\nБоря 75\nВика 90\nГена 60\n",
+      "expectedOutput": "1. Аня — 90\n2. Вика — 90\n3. Боря — 75\n4. Гена — 60\n",
+      "hidden": false
+    },
+    {
+      "name": "Один участник",
+      "stdin": "Зоя 100\n",
+      "expectedOutput": "1. Зоя — 100\n",
+      "hidden": false
+    },
+    {
+      "name": "Все с одинаковыми баллами",
+      "stdin": "Коля 50\nАня 50\nИра 50\n",
+      "expectedOutput": "1. Аня — 50\n2. Ира — 50\n3. Коля — 50\n",
+      "hidden": true
+    },
+    {
+      "name": "Уже по убыванию",
+      "stdin": "Женя 99\nДаша 98\nВика 97\n",
+      "expectedOutput": "1. Женя — 99\n2. Даша — 98\n3. Вика — 97\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Сортировать по баллам по убыванию: `Comparator.comparing(Participant::score, Comparator.reverseOrder())`.",
+    "Второй критерий добавляется через `.thenComparing(Participant::name)`.",
+    "Не ставьте `.reversed()` в конце цепочки: он перевернёт и порядок имён."
+  ],
+  "requirements": [
+    {
+      "type": "uses",
+      "construct": "lambda",
+      "message": "Опишите порядок через Comparator (например, Comparator.comparing с ссылкой на метод)."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..10:{choice:Аня|Боря|Вика|Гена|Даша|Женя|Зоя|Ира|Коля} {int:0..100}\n}"
+  }
+}

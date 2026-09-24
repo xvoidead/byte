@@ -101,23 +101,32 @@ public class CodeInspector {
                 case "noLoops" -> loops == 0;
                 case "method" -> methods.stream().anyMatch(m -> matchesMethod(m, r));
                 case "call" -> calls.stream().anyMatch(c -> callMatches(c, r.name()));
-                case "forbidCall" -> calls.stream().noneMatch(c -> callMatches(c, r.name()));
+                case "forbidCall" -> names(r).stream().noneMatch(name -> calls.stream().anyMatch(c -> callMatches(c, name)));
                 case "forbidLiteral" -> r.values().stream().noneMatch(this::containsLiteral);
                 case "recursion" -> recursive.contains(r.name());
                 case "class" -> classes.stream().anyMatch(c -> matchesClass(c, r));
                 case "privateField" -> fields.stream()
                         .anyMatch(f -> f[0].equals(r.className()) && f[1].equals(r.name()) && f[2].equals("private"));
-                case "uses" -> switch (r.construct()) {
-                    case "lambda" -> lambdas > 0;
-                    case "try" -> tries > 0;
-                    case "throw" -> throwsCount > 0;
-                    case "switch" -> switches > 0;
-                    case "stream" -> calls.stream().anyMatch(c -> callMatches(c, "stream"));
-                    case "new" -> instantiated.contains(r.name());
-                    default -> throw new IllegalArgumentException("Неизвестная конструкция: " + r.construct());
-                };
+                case "uses" -> uses(r);
+                case "avoid" -> !uses(r);
                 default -> throw new IllegalArgumentException("Неизвестный тип требования: " + r.type());
             };
+        }
+
+        private boolean uses(Requirement r) {
+            return switch (r.construct()) {
+                case "lambda" -> lambdas > 0;
+                case "try" -> tries > 0;
+                case "throw" -> throwsCount > 0;
+                case "switch" -> switches > 0;
+                case "stream" -> calls.stream().anyMatch(c -> callMatches(c, "stream") || callMatches(c, "lines"));
+                case "new" -> instantiated.contains(r.name());
+                default -> throw new IllegalArgumentException("Неизвестная конструкция: " + r.construct());
+            };
+        }
+
+        private static List<String> names(Requirement r) {
+            return r.name() != null ? List.of(r.name()) : r.values();
         }
 
         /** Число запрещено и как литерал, и внутри строки ("Площадь: 21"), если оно не часть другого числа. */

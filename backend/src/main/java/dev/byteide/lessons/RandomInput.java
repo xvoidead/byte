@@ -15,6 +15,7 @@ import java.util.random.RandomGenerator;
  *   <li>{@code {int:a..b}} — целое число от a до b;</li>
  *   <li>{@code {n=int:a..b}} — то же, но значение запоминается под именем n;</li>
  *   <li>{@code {ints:N:a..b}} — N чисел через пробел; N — число, диапазон «a..b» или имя сохранённого значения;</li>
+ *   <li>{@code {sortedints:N:a..b}} — N разных чисел по возрастанию;</li>
  *   <li>{@code {word:a..b}} — слово из строчных латинских букв длиной от a до b;</li>
  *   <li>{@code {choice:x|y|z}} — один из вариантов;</li>
  *   <li>{@code {words:N:x|y|z}} — N слов из списка через пробел;</li>
@@ -92,6 +93,22 @@ public final class RandomInput {
                     values.add(String.valueOf(range(parts[1], random, vars)));
                 }
                 yield String.join(" ", values);
+            }
+            case "sortedints" -> {
+                String[] parts = splitFirst(args);
+                int count = range(parts[0], random, vars);
+                String bounds = parts[1].strip();
+                int dots = bounds.indexOf("..");
+                int from = Integer.parseInt(bounds.substring(0, dots).strip());
+                int to = Integer.parseInt(bounds.substring(dots + 2).strip());
+                if ((long) to - from + 1 < count) {
+                    throw new IllegalArgumentException("В диапазоне " + bounds + " меньше " + count + " разных чисел");
+                }
+                java.util.TreeSet<Integer> values = new java.util.TreeSet<>();
+                while (values.size() < count) {
+                    values.add(from + random.nextInt(to - from + 1));
+                }
+                yield String.join(" ", values.stream().map(String::valueOf).toList());
             }
             case "word" -> {
                 int length = range(args, random, vars);

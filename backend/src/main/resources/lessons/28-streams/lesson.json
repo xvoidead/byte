@@ -1,0 +1,51 @@
+{
+  "module": "Современная Java",
+  "title": "Stream API",
+  "summary": "Обработка коллекций конвейером: filter, map, sorted и сбор результата.",
+  "tests": [
+    {
+      "name": "Пример из условия",
+      "stdin": "кофе 250 3\nчай 180 2\nторт 1200 1\nкофе 250 1\n",
+      "expectedOutput": "Выручка: 2560\nСамый дорогой товар: торт\nПродаж дороже 1000: 1\nТовары: кофе, торт, чай\n",
+      "hidden": false
+    },
+    {
+      "name": "Одна продажа",
+      "stdin": "вода 60 10\n",
+      "expectedOutput": "Выручка: 600\nСамый дорогой товар: вода\nПродаж дороже 1000: 0\nТовары: вода\n",
+      "hidden": false
+    },
+    {
+      "name": "Одинаковые цены",
+      "stdin": "сок 300 1\nсуп 300 2\nчай 100 1\n",
+      "expectedOutput": "Выручка: 1000\nСамый дорогой товар: сок\nПродаж дороже 1000: 0\nТовары: сок, суп, чай\n",
+      "hidden": true
+    },
+    {
+      "name": "Много дорогих",
+      "stdin": "пицца 1500 2\nторт 2500 1\nкофе 250 4\nпицца 1500 1\n",
+      "expectedOutput": "Выручка: 8000\nСамый дорогой товар: торт\nПродаж дороже 1000: 3\nТовары: кофе, пицца, торт\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Выручка: `sales.stream().mapToLong(s -> (long) s.price() * s.quantity()).sum()`.",
+    "Самый дорогой: `max(Comparator.comparingInt(Sale::price))` вернёт `Optional<Sale>`; из него достаньте название через `.map(Sale::product).orElse(...)`.",
+    "Список товаров: `map(Sale::product).distinct().sorted().toList()`, а склеить его поможет `String.join(\", \", ...)`."
+  ],
+  "requirements": [
+    {
+      "type": "uses",
+      "construct": "stream",
+      "message": "Используйте потоки (stream())."
+    },
+    {
+      "type": "noLoops",
+      "message": "Решите задачу потоками, без циклов for и while."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..10:{choice:кофе|чай|торт|сок|вода|пицца|суп} {int:50..3000} {int:1..9}\n}"
+  }
+}

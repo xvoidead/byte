@@ -1,0 +1,60 @@
+{
+  "module": "Объекты и классы",
+  "title": "record и enum",
+  "summary": "Короткие классы для данных и типы с фиксированным набором значений.",
+  "tests": [
+    {
+      "name": "Вперёд и направо",
+      "stdin": "FFRFF\n",
+      "expectedOutput": "Позиция: (2, 2)\nНаправление: восток\nШагов: 4\n",
+      "hidden": false
+    },
+    {
+      "name": "Разворот и шаг назад",
+      "stdin": "LLB\n",
+      "expectedOutput": "Позиция: (0, 1)\nНаправление: юг\nШагов: 1\n",
+      "hidden": false
+    },
+    {
+      "name": "Полный оборот",
+      "stdin": "RRRR\n",
+      "expectedOutput": "Позиция: (0, 0)\nНаправление: север\nШагов: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Пустая строка",
+      "stdin": "\n",
+      "expectedOutput": "Позиция: (0, 0)\nНаправление: север\nШагов: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Длинный маршрут",
+      "stdin": "FFLFFLFFLFFRBBB\n",
+      "expectedOutput": "Позиция: (0, 3)\nНаправление: юг\nШагов: 11\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Удобно хранить в каждом значении enum смещение: у NORTH `dx = 0, dy = 1`, у EAST `dx = 1, dy = 0` и так далее.",
+    "Поворот направо — следующее значение по кругу: `values()[(ordinal() + 1) % 4]`, налево — `(ordinal() + 3) % 4`.",
+    "Запись неизменяема: при шаге создавайте новую позицию, например `new Position(x + dx, y + dy)`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "Direction",
+      "kind": "enum",
+      "message": "Направление — это enum Direction."
+    },
+    {
+      "type": "class",
+      "name": "Position",
+      "kind": "record",
+      "message": "Позиция — это record Position."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:0..40:{choice:F|F|L|R|B}}\n"
+  }
+}

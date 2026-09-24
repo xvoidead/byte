@@ -1,0 +1,60 @@
+{
+  "module": "Объекты и классы",
+  "title": "Интерфейсы и полиморфизм",
+  "summary": "Контракт вместо реализации: один интерфейс — много разных классов.",
+  "tests": [
+    {
+      "name": "Три скидки",
+      "stdin": "1000\npercent 10\nfixed 300\nnone\n",
+      "expectedOutput": "Скидка 10%: 900\nСкидка 300 ₽: 700\nБез скидки: 1000\nЛучшая цена: 700\n",
+      "hidden": false
+    },
+    {
+      "name": "Скидка больше цены",
+      "stdin": "500\nfixed 800\n",
+      "expectedOutput": "Скидка 800 ₽: 0\nЛучшая цена: 0\n",
+      "hidden": false
+    },
+    {
+      "name": "Округление процентов",
+      "stdin": "999\npercent 15\npercent 100\npercent 0\n",
+      "expectedOutput": "Скидка 15%: 850\nСкидка 100%: 0\nСкидка 0%: 999\nЛучшая цена: 0\n",
+      "hidden": true
+    },
+    {
+      "name": "Только без скидки",
+      "stdin": "42\nnone\n",
+      "expectedOutput": "Без скидки: 42\nЛучшая цена: 42\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Каждый класс объявляется как `class PercentDiscount implements Discount` и хранит свой параметр в приватном поле.",
+    "Методы интерфейса публичные, поэтому в классах пишите `public int apply(int price)` и `public String describe()`.",
+    "В `main` создавайте нужный объект по слову: `percent` → `new PercentDiscount(in.nextInt())`, `fixed` → `new FixedDiscount(in.nextInt())`, `none` → `new NoDiscount()`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "PercentDiscount",
+      "interfaceName": "Discount",
+      "message": "PercentDiscount реализует интерфейс Discount."
+    },
+    {
+      "type": "class",
+      "name": "FixedDiscount",
+      "interfaceName": "Discount",
+      "message": "FixedDiscount реализует интерфейс Discount."
+    },
+    {
+      "type": "class",
+      "name": "NoDiscount",
+      "interfaceName": "Discount",
+      "message": "NoDiscount реализует интерфейс Discount."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{int:1..100000}\n{repeat:1..6:{choice:percent {int:0..100}|fixed {int:0..5000}|none}\n}"
+  }
+}

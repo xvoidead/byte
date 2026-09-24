@@ -28,7 +28,7 @@ class ApiTest {
     void listsLessons() throws Exception {
         mvc.perform(get("/api/lessons"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(10)))
+                .andExpect(jsonPath("$", hasSize(32)))
                 .andExpect(jsonPath("$[0].slug").value("hello-world"))
                 .andExpect(jsonPath("$[0].theory").doesNotExist());
     }
@@ -45,7 +45,7 @@ class ApiTest {
                 .andExpect(jsonPath("$.hints").isNotEmpty())
                 .andExpect(jsonPath("$.solution").doesNotExist())
                 .andExpect(jsonPath("$.prev").value("variables"))
-                .andExpect(jsonPath("$.next").value("conditions"));
+                .andExpect(jsonPath("$.next").value("math"));
     }
 
     @Test

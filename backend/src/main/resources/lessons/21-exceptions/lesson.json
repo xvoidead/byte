@@ -1,0 +1,58 @@
+{
+  "module": "Надёжный код",
+  "title": "Исключения",
+  "summary": "Что делать, когда что-то пошло не так: try, catch и finally.",
+  "tests": [
+    {
+      "name": "Одна ошибка",
+      "stdin": "10\n20\nабв\n30\n",
+      "expectedOutput": "Сумма: 60\nЧисел: 3\nОшибок: 1\nСреднее: 20.00\n",
+      "hidden": false
+    },
+    {
+      "name": "Только ошибки",
+      "stdin": "x\ny\n",
+      "expectedOutput": "Сумма: 0\nЧисел: 0\nОшибок: 2\nСреднее: нет данных\n",
+      "hidden": false
+    },
+    {
+      "name": "Пробелы, пустые строки и переполнение",
+      "stdin": " 5 \n\n-5\n99999999999\n7\n",
+      "expectedOutput": "Сумма: 7\nЧисел: 3\nОшибок: 1\nСреднее: 2.33\n",
+      "hidden": true
+    },
+    {
+      "name": "Дробные числа",
+      "stdin": "1.5\n2\n3,5\n4\n",
+      "expectedOutput": "Сумма: 6\nЧисел: 2\nОшибок: 2\nСреднее: 3.00\n",
+      "hidden": true
+    },
+    {
+      "name": "Пустой ввод",
+      "stdin": "",
+      "expectedOutput": "Сумма: 0\nЧисел: 0\nОшибок: 0\nСреднее: нет данных\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Пропускайте пустые строки через `if (line.isEmpty()) continue;`.",
+    "Оберните `Integer.parseInt(line)` в `try`, а в `catch (NumberFormatException e)` увеличьте счётчик ошибок.",
+    "Среднее — `(double) sum / count`; не забудьте отдельно обработать случай `count == 0`."
+  ],
+  "requirements": [
+    {
+      "type": "uses",
+      "construct": "try",
+      "message": "Обработайте ошибки через try / catch."
+    },
+    {
+      "type": "call",
+      "name": "parseInt",
+      "message": "Превращайте строки в числа методом Integer.parseInt."
+    }
+  ],
+  "random": {
+    "count": 3,
+    "input": "{repeat:1..12:{choice:{int:-1000..1000}|{int:-1000..1000}|{word:1..5}|{int:0..9}{word:1..2}|| {int:0..99} }\n}"
+  }
+}
