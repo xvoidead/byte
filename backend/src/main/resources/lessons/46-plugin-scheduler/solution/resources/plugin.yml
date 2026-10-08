@@ -1,0 +1,7 @@
+name: ByteCountdown
+version: 1.0.0
+main: CountdownPlugin
+api-version: '1.21'
+commands:
+  countdown:
+    description: Запустить обратный отсчёт

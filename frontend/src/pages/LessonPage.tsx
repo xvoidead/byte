@@ -201,7 +201,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
                 update((s) => ({ ...s, solutionShown: true }));
               }}
               onInsertSolution={(files) => {
-                saveProject(`lesson:${lesson.slug}`, { files, active: 'Main.java' });
+                saveProject(`lesson:${lesson.slug}`, { files, active: lesson.activeFile ?? 'Main.java' });
                 setIdeVersion((v) => v + 1);
               }}
             />
@@ -242,6 +242,7 @@ function Lesson({ lesson }: { lesson: LessonDetails }) {
             key={ideVersion}
             storageKey={`lesson:${lesson.slug}`}
             initialFiles={initialFiles}
+            initialActiveFile={lesson.activeFile ?? undefined}
             lessonSlug={lesson.slug}
             onPassed={onPassed}
             onChecked={onChecked}

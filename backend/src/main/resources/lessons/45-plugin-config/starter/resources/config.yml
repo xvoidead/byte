@@ -1,0 +1,5 @@
+prefix: "[Byte]"
+welcome: "Добро пожаловать, %player%!"
+motd:
+  - "Paper + Bukkit"
+  - "Настройте сообщения в config.yml"

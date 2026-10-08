@@ -1,0 +1,53 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Очки за добычу",
+  "summary": "Начисляем разные очки за камень и алмазную руду после успешного ломания.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Награды за камень и алмазную руду",
+      "stdin": "join Steve\nbreak Steve 1 64 1 STONE\nbreak Steve 2 64 2 DIAMOND_ORE\n",
+      "expectedOutput": "[Steve] Очки: +1. Всего: 1\n[Steve] Очки: +5. Всего: 6\n",
+      "hidden": false
+    },
+    {
+      "name": "Другие блоки не дают очки",
+      "stdin": "join Alex\nbreak Alex 1 64 1 DIRT\nbreak Alex 2 64 2 STONE\njoin Steve\nbreak Steve 3 64 3 DIAMOND_ORE\n",
+      "expectedOutput": "[Alex] Очки: +1. Всего: 1\n[Steve] Очки: +5. Всего: 5\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Зарегистрируйте `PlayerBlockBreakEvents.AFTER`.",
+    "Определите reward через `state.isOf(Blocks.DIAMOND_ORE)` и `Blocks.STONE`; остальные случаи завершите `return`.",
+    "Получите имя через `player.getName().getString()`, увеличьте Map через merge и отправьте итоговое сообщение."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "BlockRewardMod",
+      "interfaceName": "ModInitializer",
+      "message": "Регистрируйте события из ModInitializer."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на AFTER callback."
+    },
+    {
+      "type": "call",
+      "name": "isOf",
+      "message": "Различайте типы блоков."
+    },
+    {
+      "type": "call",
+      "name": "merge",
+      "message": "Суммируйте очки игрока через Map.merge."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Покажите начисление и новую сумму."
+    }
+  ]
+}

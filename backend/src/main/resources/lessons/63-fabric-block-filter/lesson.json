@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Фильтр ломания блоков",
+  "summary": "Проверяем BlockState через Blocks и запрещаем добывать бедрок.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Бедрок запрещён, камень разрешён",
+      "stdin": "join Steve\nbreak Steve 0 64 0 BEDROCK\nbreak Steve 1 64 0 STONE\n",
+      "expectedOutput": "[Steve] Бедрок защищён.\n",
+      "hidden": false
+    },
+    {
+      "name": "Защита работает на любой высоте",
+      "stdin": "join Alex\nbreak Alex 8 120 8 BEDROCK\n",
+      "expectedOutput": "[Alex] Бедрок защищён.\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Импортируйте `PlayerBlockBreakEvents` и зарегистрируйте `BEFORE`.",
+    "Используйте `state.isOf(Blocks.BEDROCK)`, чтобы проверить блок.",
+    "При запрете отправьте `Text.literal` и верните false; иначе верните true."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "FabricBlockGuardMod",
+      "interfaceName": "ModInitializer",
+      "message": "Добавьте обработчик в общий entrypoint Fabric."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Зарегистрируйте BEFORE callback."
+    },
+    {
+      "type": "call",
+      "name": "isOf",
+      "message": "Проверьте тип блока через BlockState.isOf."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Сообщите игроку о запрете."
+    }
+  ]
+}

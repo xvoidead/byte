@@ -80,6 +80,8 @@ export interface LessonDetails extends LessonSummary {
   task: string;
   starterCode: string;
   starterFiles: ProjectFile[];
+  /** Файл, который редактор выбирает при первом открытии урока. */
+  activeFile: string | null;
   examples: Example[];
   testCount: number;
   hints: string[];

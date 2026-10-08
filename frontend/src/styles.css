@@ -622,6 +622,102 @@ kbd {
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
+
+.minecraft-tracks {
+  margin-bottom: 120px;
+}
+.minecraft-tracks .section-head {
+  margin-bottom: 28px;
+}
+.minecraft-tracks .pill {
+  margin-bottom: 14px;
+}
+.minecraft-track-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.minecraft-track-card {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 65%), var(--bg);
+}
+.minecraft-track-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.minecraft-track-title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.minecraft-track-badge {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 11px;
+  line-height: 1.3;
+}
+.minecraft-track-card:nth-child(2) .minecraft-track-badge {
+  border-color: rgba(111, 211, 165, 0.25);
+  color: var(--ok);
+  background: rgba(111, 211, 165, 0.08);
+}
+.minecraft-track-description {
+  min-height: 44px;
+  margin: 14px 0 8px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.minecraft-track-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.minecraft-track-lessons {
+  margin: 18px 0 20px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.minecraft-track-lessons li + li {
+  border-top: 1px solid var(--border);
+}
+.minecraft-track-lessons a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 14px;
+  transition: background 0.15s var(--ease);
+}
+.minecraft-track-lessons a:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.minecraft-track-lessons a svg {
+  margin-left: auto;
+  color: var(--ok);
+}
+.minecraft-track-lessons a.done {
+  color: var(--ok);
+}
+.minecraft-track-card > .btn {
+  width: fit-content;
+}
+
 .track-demo {
   position: relative;
 }
@@ -2324,6 +2420,9 @@ kbd {
     grid-template-columns: minmax(0, 1fr);
     gap: 40px;
   }
+  .minecraft-track-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .feature + .feature {
     border-left: none;
     border-top: 1px solid var(--border);
@@ -2372,8 +2471,12 @@ kbd {
     padding-right: 10px;
   }
   .features,
-  .track {
+  .track,
+  .minecraft-tracks {
     margin-bottom: 80px;
+  }
+  .minecraft-track-card {
+    padding: 20px;
   }
   .config-window-bar .window-dots {
     display: none;

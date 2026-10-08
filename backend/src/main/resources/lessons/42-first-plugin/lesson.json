@@ -1,0 +1,55 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Первый Bukkit-плагин",
+  "summary": "JavaPlugin, plugin.yml и события входа: приветствие и список игроков онлайн.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Первый игрок",
+      "stdin": "join Steve\n",
+      "expectedOutput": "[Steve] Добро пожаловать, Steve!\n[Steve] Это ваш первый вход.\n[Steve] Сейчас на сервере: 1\n",
+      "hidden": false
+    },
+    {
+      "name": "Игроки заходят и выходят",
+      "stdin": "join Steve\njoin Alex\nquit Steve\njoin Steve\n",
+      "expectedOutput": "[Steve] Добро пожаловать, Steve!\n[Steve] Это ваш первый вход.\n[Steve] Сейчас на сервере: 1\n[Alex] Добро пожаловать, Alex!\n[Alex] Это ваш первый вход.\n[Alex] Сейчас на сервере: 2\n[Steve] Добро пожаловать, Steve!\n[Steve] С возвращением.\n[Steve] Сейчас на сервере: 2\n",
+      "hidden": true
+    },
+    {
+      "name": "Несколько игроков онлайн",
+      "stdin": "join Alex\njoin Notch\n",
+      "expectedOutput": "[Alex] Добро пожаловать, Alex!\n[Alex] Это ваш первый вход.\n[Alex] Сейчас на сервере: 1\n[Notch] Добро пожаловать, Notch!\n[Notch] Это ваш первый вход.\n[Notch] Сейчас на сервере: 2\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Главный класс плагина наследуется от `JavaPlugin`. Bukkit вызовет `onEnable()` при загрузке.",
+    "В `onEnable` подпишитесь на события: `getServer().getPluginManager().registerEvents(this, this)`.",
+    "Добавьте `@EventHandler` к методу с `PlayerJoinEvent`. Имя игрока берётся через `event.getPlayer().getName()`, а число игроков — через `getServer().getOnlinePlayers().size()`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "WelcomePlugin",
+      "superclass": "JavaPlugin",
+      "message": "Главный класс должен наследоваться от JavaPlugin."
+    },
+    {
+      "type": "class",
+      "name": "WelcomePlugin",
+      "interfaceName": "Listener",
+      "message": "Обрабатывайте события через интерфейс Listener."
+    },
+    {
+      "type": "call",
+      "name": "registerEvents",
+      "message": "Зарегистрируйте слушатель событий в onEnable."
+    },
+    {
+      "type": "call",
+      "name": "getOnlinePlayers",
+      "message": "Покажите число игроков, которые сейчас на сервере."
+    }
+  ]
+}

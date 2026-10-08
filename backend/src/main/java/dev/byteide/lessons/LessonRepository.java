@@ -86,6 +86,16 @@ public class LessonRepository {
             if (lessonMeta.random() != null) {
                 new RandomInput(lessonMeta.random().input());
             }
+            Project starter = project(root, dirName, "starter", "Main.java", meta);
+            Project solution = project(root, dirName, "solution", "solution.java", meta);
+            if (lessonMeta.activeFile() != null && starter.sources().stream()
+                    .noneMatch(file -> file.name().equals(lessonMeta.activeFile()))) {
+                throw new IllegalArgumentException("activeFile не найден среди исходников starter/: " + lessonMeta.activeFile());
+            }
+            if (lessonMeta.activeFile() != null && solution.sources().stream()
+                    .noneMatch(file -> file.name().equals(lessonMeta.activeFile()))) {
+                throw new IllegalArgumentException("activeFile не найден среди исходников solution/: " + lessonMeta.activeFile());
+            }
             return new Lesson(
                     matcher.group(2),
                     Integer.parseInt(matcher.group(1)),
@@ -94,11 +104,12 @@ public class LessonRepository {
                     lessonMeta.summary(),
                     LessonMarkdown.parseSteps(text(meta.createRelative("theory.md"))),
                     text(meta.createRelative("task.md")),
-                    project(root, dirName, "starter", "Main.java", meta),
-                    project(root, dirName, "solution", "solution.java", meta),
+                    starter,
+                    solution,
                     listOf(lessonMeta.tests()),
                     listOf(lessonMeta.hints()),
                     listOf(lessonMeta.requirements()),
+                    lessonMeta.activeFile(),
                     lessonMeta.random());
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException("Ошибка в уроке " + meta + ": " + e.getMessage(), e);
@@ -143,6 +154,7 @@ public class LessonRepository {
     }
 
     private record LessonMeta(String module, String title, String summary, List<LessonTest> tests,
-                              List<String> hints, List<Requirement> requirements, Lesson.RandomTests random) {
+                              List<String> hints, List<Requirement> requirements, String activeFile,
+                              Lesson.RandomTests random) {
     }
 }

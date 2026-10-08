@@ -1,0 +1,67 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Экономика сервера",
+  "summary": "Итоговый проект: награды за блоки из конфига, баланс, переводы и таблица лидеров.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Награды, перевод и топ",
+      "stdin": "join Steve\njoin Alex\nbreak Steve 1 64 1 STONE\nbreak Steve 2 64 2 DIAMOND_ORE\ncmd Steve balance\ncmd Steve pay Alex 5\ncmd Alex balance\ncmd Steve baltop\n",
+      "expectedOutput": "[Steve] +1 монет. Баланс: 1\n[Steve] +10 монет. Баланс: 11\n[Steve] Баланс: 11 монет.\n[Steve] Переведено Alex: 5 монет.\n[Alex] Получено от Steve: 5 монет.\n[Alex] Баланс: 5 монет.\n[Steve] 1. Steve — 6\n[Steve] 2. Alex — 5\n",
+      "hidden": false
+    },
+    {
+      "name": "Не выдаём награду за неизвестный блок",
+      "stdin": "join Steve\nbreak Steve 10 64 10 DIRT\ncmd Steve balance\n",
+      "expectedOutput": "[Steve] Баланс: 0 монет.\n",
+      "hidden": true
+    },
+    {
+      "name": "Проверки перевода",
+      "stdin": "join Steve\njoin Alex\ncmd Steve pay Alex -2\ncmd Steve pay Alex 1\ncmd Steve pay Herobrine 1\ncmd Steve balance\n",
+      "expectedOutput": "[Steve] Сумма должна быть больше нуля.\n[Steve] Недостаточно монет.\n[Steve] Игрок Herobrine не найден.\n[Steve] Баланс: 0 монет.\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Заведите `Map<String, Integer>` и при входе добавляйте игрока с нулевым балансом через `putIfAbsent`.",
+    "Награда хранится в YAML по имени материала: `getConfig().getInt(\"rewards.\" + event.getBlock().getType().name(), 0)`. Неизвестному блоку соответствует ноль.",
+    "В `/pay` сначала проверьте положительную сумму, онлайн-адресата и баланс. Списывайте и начисляйте только после всех проверок.",
+    "Для `/baltop` отсортируйте игроков онлайн по балансу по убыванию, а при равенстве — по имени. Не изменяйте порядок коллекции из Bukkit напрямую."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "EconomyPlugin",
+      "superclass": "JavaPlugin",
+      "message": "Экономика должна быть Bukkit-плагином."
+    },
+    {
+      "type": "class",
+      "name": "EconomyPlugin",
+      "interfaceName": "Listener",
+      "message": "Награду за блоки выдавайте из обработчика события."
+    },
+    {
+      "type": "class",
+      "name": "EconomyPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Обработайте команды через CommandExecutor."
+    },
+    {
+      "type": "call",
+      "name": "getConfig",
+      "message": "Читайте награды из config.yml."
+    },
+    {
+      "type": "call",
+      "name": "merge",
+      "message": "Начисляйте награду в Map без отдельной проверки наличия ключа."
+    },
+    {
+      "type": "call",
+      "name": "sort",
+      "message": "Отсортируйте игроков для команды baltop."
+    }
+  ]
+}

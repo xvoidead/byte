@@ -1,0 +1,4 @@
+name: Welcome
+version: 1.0.0
+main: WelcomePlugin
+api-version: '1.21'

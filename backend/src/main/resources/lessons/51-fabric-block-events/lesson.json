@@ -1,0 +1,53 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "События ломания блоков",
+  "summary": "PlayerBlockBreakEvents позволяет запретить ломание у спавна и реагировать на успешную добычу.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Защита области и блок за её пределами",
+      "stdin": "join Steve\nbreak Steve 0 64 0 STONE\nbreak Steve 5 64 0 STONE\nbreak Steve 6 64 0 DIAMOND_ORE\n",
+      "expectedOutput": "[Steve] У спавна нельзя ломать блоки.\n[Steve] У спавна нельзя ломать блоки.\n[Steve] Блок добыт!\n",
+      "hidden": false
+    },
+    {
+      "name": "Блок в дальней точке добывается",
+      "stdin": "join Alex\nbreak Alex 10 64 10 STONE\n",
+      "expectedOutput": "[Alex] Блок добыт!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Подпишитесь на `PlayerBlockBreakEvents.BEFORE`. Callback возвращает boolean: `false` запрещает ломание.",
+    "Расстояние до спавна на (0, 0) проверяется по горизонтальным координатам: `pos.getX() * pos.getX() + pos.getZ() * pos.getZ() <= 25`.",
+    "Для успешного ломания зарегистрируйте `PlayerBlockBreakEvents.AFTER`; отправьте сообщение через `player.sendMessage(Text.literal(...), false)`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "SpawnGuardMod",
+      "interfaceName": "ModInitializer",
+      "message": "Зарегистрируйте событие при инициализации мода."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Зарегистрируйте обработчик BEFORE и AFTER."
+    },
+    {
+      "type": "call",
+      "name": "getZ",
+      "message": "Проверяйте расстояние по горизонтальным координатам блока."
+    },
+    {
+      "type": "call",
+      "name": "getX",
+      "message": "Проверяйте расстояние по X и Z блока."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Сообщите игроку о запрете или успешной добыче."
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Напоминание каждые пять тиков",
+  "summary": "Считаем серверные тики и рассылаем сообщение через заданный интервал.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Сообщение ровно на каждом пятом тике",
+      "stdin": "join Steve\ntick 4\ntick 1\ntick 5\n",
+      "expectedOutput": "[Steve] Прошло 5 тиков.\n[Steve] Прошло 5 тиков.\n",
+      "hidden": false
+    },
+    {
+      "name": "До пятого тика ничего не отправляется",
+      "stdin": "join Alex\ntick 4\n",
+      "expectedOutput": "",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Счётчик `ticks` должен быть полем класса.",
+    "Передайте `this::onTick` в `ServerTickEvents.END_SERVER_TICK.register`.",
+    "Увеличивайте ticks и проверяйте остаток от деления на 5."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "TickReminderMod",
+      "interfaceName": "ModInitializer",
+      "message": "Используйте общий серверный entrypoint."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на событие серверного тика."
+    },
+    {
+      "type": "call",
+      "name": "broadcast",
+      "message": "Рассылайте напоминание игрокам онлайн."
+    },
+    {
+      "type": "call",
+      "name": "getPlayerManager",
+      "message": "Получите менеджер подключённых игроков."
+    }
+  ]
+}

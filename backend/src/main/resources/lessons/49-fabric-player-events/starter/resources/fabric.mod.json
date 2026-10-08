@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "byte_player_events",
+  "version": "1.0.0",
+  "name": "Byte Player Events",
+  "environment": "server",
+  "entrypoints": { "main": ["PlayerEventsMod"] },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

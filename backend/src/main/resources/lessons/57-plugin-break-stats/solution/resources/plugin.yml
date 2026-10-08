@@ -1,0 +1,7 @@
+name: ByteBreakStats
+version: 1.0.0
+main: BreakStatsPlugin
+api-version: '1.21'
+commands:
+  blocks:
+    description: Показать добытые блоки

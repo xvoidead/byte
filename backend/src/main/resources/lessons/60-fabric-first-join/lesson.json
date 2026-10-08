@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Первый вход и возвращение",
+  "summary": "Запоминаем игроков в Set и отличаем первое подключение от повторного.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Первый вход и повторное подключение",
+      "stdin": "join Steve\nquit Steve\njoin Steve\n",
+      "expectedOutput": "[Steve] Добро пожаловать впервые, Steve!\n[Steve] С возвращением, Steve!\n",
+      "hidden": false
+    },
+    {
+      "name": "Имена сравниваются без регистра",
+      "stdin": "join Alex\nquit Alex\njoin alex\n",
+      "expectedOutput": "[Alex] Добро пожаловать впервые, Alex!\n[alex] С возвращением, alex!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Добавьте поле `Set<String>` в класс мода.",
+    "В `JOIN.register` получите имя через `handler.player.getName().getString()`.",
+    "Проверьте результат `seen.add(name.toLowerCase(Locale.ROOT))` и отправьте подходящий `Text.literal`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "FirstJoinMod",
+      "interfaceName": "ModInitializer",
+      "message": "Используйте серверный entrypoint Fabric."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Зарегистрируйте JOIN callback."
+    },
+    {
+      "type": "call",
+      "name": "add",
+      "message": "Запоминайте имена в Set."
+    },
+    {
+      "type": "call",
+      "name": "getString",
+      "message": "Прочитайте имя игрока из Text."
+    }
+  ]
+}

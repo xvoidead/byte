@@ -1,0 +1,11 @@
+name: BytePermission
+version: 1.0.0
+main: PermissionPlugin
+api-version: '1.21'
+commands:
+  announce:
+    description: Отправить объявление
+permissions:
+  byte.announce:
+    description: Разрешает отправлять объявления
+    default: op

@@ -1,0 +1,59 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Клиентская клавиша",
+  "summary": "ClientModInitializer, регистрация KeyBinding и обработка нажатий в END_CLIENT_TICK.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Клавиша G показывает сообщение",
+      "stdin": "press G\ntick\n",
+      "expectedOutput": "[Steve] Ты нажал G!\n",
+      "hidden": false
+    },
+    {
+      "name": "Остальные клавиши не срабатывают",
+      "stdin": "press F\ntick\n",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "name": "Не теряем быстрые повторные нажатия",
+      "stdin": "press G\npress G\ntick\n",
+      "expectedOutput": "[Steve] Ты нажал G!\n[Steve] Ты нажал G!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Реализуйте `ClientModInitializer` и поместите регистрацию в `onInitializeClient()`.",
+    "Создайте `KeyBinding` с типом `InputUtil.Type.KEYSYM`, кодом 71 (клавиша G) и категорией, затем вызовите `KeyBindingHelper.registerKeyBinding`.",
+    "В `ClientTickEvents.END_CLIENT_TICK` проверяйте `while (key.wasPressed())`; если `client.player` не равен null, отправьте ему сообщение."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "ClientKeyMod",
+      "interfaceName": "ClientModInitializer",
+      "message": "Клиентский мод должен реализовать ClientModInitializer."
+    },
+    {
+      "type": "call",
+      "name": "registerKeyBinding",
+      "message": "Зарегистрируйте клавишу через KeyBindingHelper."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на END_CLIENT_TICK."
+    },
+    {
+      "type": "call",
+      "name": "wasPressed",
+      "message": "Обрабатывайте нажатия через KeyBinding.wasPressed()."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Покажите сообщение локальному игроку."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Команды и права доступа",
+  "summary": "CommandExecutor, аргументы, личные сообщения и команда объявления только для операторов.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Личное сообщение и права оператора",
+      "stdin": "join Alex\njoin Steve\ncmd Steve msg Alex привет, как дела\ncmd Alex broadcast Встречаемся у спавна\nop Alex\ncmd Alex broadcast Сервер перезапустится через минуту\n",
+      "expectedOutput": "[Alex] От Steve: привет, как дела\n[Steve] Кому Alex: привет, как дела\n[Alex] Только операторы могут объявлять.\n[Alex] [Объявление] Сервер перезапустится через минуту\n[Steve] [Объявление] Сервер перезапустится через минуту\n",
+      "hidden": false
+    },
+    {
+      "name": "Неверные аргументы и офлайн-игрок",
+      "stdin": "join Steve\ncmd Steve msg\ncmd Steve msg Herobrine hi\ncmd Steve broadcast\n",
+      "expectedOutput": "[Steve] Использование: /msg <игрок> <текст>\n[Steve] Игрок Herobrine не найден.\n[Steve] Только операторы могут объявлять.\n",
+      "hidden": true
+    },
+    {
+      "name": "Сообщение с несколькими словами",
+      "stdin": "join Alex\njoin Steve\ncmd Steve msg Alex передай привет всему серверу\n",
+      "expectedOutput": "[Alex] От Steve: передай привет всему серверу\n[Steve] Кому Alex: передай привет всему серверу\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Пусть главный класс реализует `CommandExecutor`, а в `onEnable` передайте `this` в `getCommand(\"msg\").setExecutor(this)`. Команды должны быть объявлены в `plugin.yml`.",
+    "`args` уже разбит на слова. Для текста из нескольких слов склейте хвост через `String.join(\" \", Arrays.copyOfRange(args, 1, args.length))`.",
+    "`sender.isOp()` проверяет оператора. Перед отправкой найдите игрока через `getServer().getPlayerExact(name)` и обработайте `null`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "MessagePlugin",
+      "superclass": "JavaPlugin",
+      "message": "Команды должны находиться в главном классе плагина."
+    },
+    {
+      "type": "class",
+      "name": "MessagePlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Обработчик должен реализовать CommandExecutor."
+    },
+    {
+      "type": "call",
+      "name": "setExecutor",
+      "message": "Зарегистрируйте обработчик для обеих команд."
+    },
+    {
+      "type": "call",
+      "name": "isOp",
+      "message": "Проверьте права оператора для /broadcast."
+    },
+    {
+      "type": "call",
+      "name": "getPlayerExact",
+      "message": "Ищите адресата точным совпадением имени."
+    }
+  ]
+}

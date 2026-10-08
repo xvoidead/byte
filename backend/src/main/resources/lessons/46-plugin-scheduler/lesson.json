@@ -1,0 +1,49 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Таймеры и планировщик",
+  "summary": "Запускаем задачу по тикам, считаем обратный отсчёт и отменяем BukkitRunnable.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Обратный отсчёт",
+      "stdin": "join Steve\ncmd Steve countdown 3\nwait 1\nwait 20\nwait 20\nwait 20\n",
+      "expectedOutput": "[Steve] До старта: 3\n[Steve] До старта: 2\n[Steve] До старта: 1\n[Steve] Старт!\n",
+      "hidden": false
+    },
+    {
+      "name": "Нельзя запустить дважды с неверным числом",
+      "stdin": "join Alex\ncmd Alex countdown 0\ncmd Alex countdown nope\n",
+      "expectedOutput": "[Alex] Укажите число от 1 до 10.\n[Alex] Укажите число от 1 до 10.\n",
+      "hidden": true
+    },
+    {
+      "name": "Отсчёт останавливается после старта",
+      "stdin": "join Steve\ncmd Steve countdown 1\nwait 1\nwait 20\nwait 40\n",
+      "expectedOutput": "[Steve] До старта: 1\n[Steve] Старт!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Проверьте `args.length` и число через `Integer.parseInt` внутри try/catch. Допустимы секунды от 1 до 10.",
+    "Создайте анонимный `BukkitRunnable`: в поле храните оставшееся время, а метод `run()` вызывается планировщиком.",
+    "Используйте `runTaskTimer(this, 1L, 20L)`: 20 тиков — примерно одна секунда. На нуле отправьте `Старт!` и вызовите `cancel()`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "CountdownPlugin",
+      "superclass": "JavaPlugin",
+      "message": "Обработчик таймера должен быть в главном плагине."
+    },
+    {
+      "type": "call",
+      "name": "runTaskTimer",
+      "message": "Запустите повторяющуюся задачу через BukkitRunnable."
+    },
+    {
+      "type": "call",
+      "name": "cancel",
+      "message": "Остановите задачу после завершения отсчёта."
+    }
+  ]
+}

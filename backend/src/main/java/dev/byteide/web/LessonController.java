@@ -60,7 +60,7 @@ public class LessonController {
                 .toList();
         int randomCount = lesson.random() == null ? 0 : lesson.random().count();
         return new LessonDetails(lesson.slug(), lesson.order(), lesson.module(), lesson.title(), lesson.summary(),
-                lesson.steps(), lesson.task(), lesson.starterCode(), lesson.starter().files(), examples,
+                lesson.steps(), lesson.task(), lesson.starterCode(), lesson.starter().files(), lesson.activeFile(), examples,
                 lesson.tests().size() + randomCount,
                 lesson.hints(), lesson.requirements().stream().map(Requirement::message).toList(), prev, next);
     }
@@ -105,6 +105,7 @@ public class LessonController {
             String task,
             String starterCode,
             List<ProjectFile> starterFiles,
+            String activeFile,
             List<Example> examples,
             int testCount,
             List<String> hints,

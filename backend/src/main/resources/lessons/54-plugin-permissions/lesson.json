@@ -1,0 +1,49 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Именованные разрешения",
+  "summary": "Создаём permission node в plugin.yml и проверяем его через hasPermission.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Игроку без права отказано, оператор может объявить",
+      "stdin": "join Alex\ncmd Alex announce Стартуем\nop Alex\ncmd Alex announce Встречаемся у спавна\n",
+      "expectedOutput": "[Alex] Недостаточно прав.\n[Alex] [Объявление] Встречаемся у спавна\n",
+      "hidden": false
+    },
+    {
+      "name": "Право относится к каждому отправителю отдельно",
+      "stdin": "join Steve\njoin Alex\nop Alex\ncmd Steve announce Привет\ncmd Alex announce Сервер открыт\n",
+      "expectedOutput": "[Steve] Недостаточно прав.\n[Steve] [Объявление] Сервер открыт\n[Alex] [Объявление] Сервер открыт\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Право объявляется в `plugin.yml` в разделе `permissions`; команда должна быть в `commands`.",
+    "В `onEnable` свяжите `announce` с этим объектом: `getCommand(\"announce\").setExecutor(this)`.",
+    "Сначала вызовите `sender.hasPermission(\"byte.announce\")`; после проверки соберите аргументы через `String.join` и используйте `broadcastMessage`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "PermissionPlugin",
+      "superclass": "JavaPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Главный класс плагина должен обрабатывать команды."
+    },
+    {
+      "type": "call",
+      "name": "hasPermission",
+      "message": "Проверяйте именованное право отправителя."
+    },
+    {
+      "type": "call",
+      "name": "setExecutor",
+      "message": "Зарегистрируйте обработчик команды."
+    },
+    {
+      "type": "call",
+      "name": "broadcastMessage",
+      "message": "Объявление должно увидеть весь сервер."
+    }
+  ]
+}

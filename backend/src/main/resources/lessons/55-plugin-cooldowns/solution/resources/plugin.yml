@@ -1,0 +1,7 @@
+name: ByteCooldown
+version: 1.0.0
+main: CooldownPlugin
+api-version: '1.21'
+commands:
+  gift:
+    description: Получить подарок

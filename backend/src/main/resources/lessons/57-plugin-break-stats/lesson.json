@@ -1,0 +1,55 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Счётчик добытых блоков",
+  "summary": "Считаем камень отдельно для каждого UUID и показываем результат командой.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Считается только камень",
+      "stdin": "join Steve\nbreak Steve 1 64 1 STONE\nbreak Steve 2 64 2 DIRT\nbreak Steve 3 64 3 STONE\ncmd Steve blocks\n",
+      "expectedOutput": "[Steve] Камней сломано: 2\n",
+      "hidden": false
+    },
+    {
+      "name": "Счёт игроков независим",
+      "stdin": "join Alex\nbreak Alex 1 64 1 STONE\njoin Steve\ncmd Steve blocks\ncmd Alex blocks\n",
+      "expectedOutput": "[Steve] Камней сломано: 0\n[Alex] Камней сломано: 1\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Храните число в `Map<UUID, Integer>`.",
+    "Сравните материал с `Material.STONE`, затем вызовите `merge(uuid, 1, Integer::sum)`.",
+    "В `/blocks` используйте `getOrDefault(uuid, 0)`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "BreakStatsPlugin",
+      "superclass": "JavaPlugin",
+      "interfaceName": "Listener",
+      "message": "Обновляйте счётчик из Bukkit listener."
+    },
+    {
+      "type": "class",
+      "name": "BreakStatsPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Реализуйте команду просмотра статистики."
+    },
+    {
+      "type": "call",
+      "name": "merge",
+      "message": "Увеличивайте счётчик через Map.merge."
+    },
+    {
+      "type": "call",
+      "name": "getOrDefault",
+      "message": "Покажите ноль, если счёта ещё нет."
+    },
+    {
+      "type": "call",
+      "name": "getUniqueId",
+      "message": "Ключом статистики должен быть UUID игрока."
+    }
+  ]
+}

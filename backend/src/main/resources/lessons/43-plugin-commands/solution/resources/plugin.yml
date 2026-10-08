@@ -1,0 +1,9 @@
+name: ByteMessages
+version: 1.0.0
+main: MessagePlugin
+api-version: '1.21'
+commands:
+  msg:
+    description: Отправить личное сообщение
+  broadcast:
+    description: Объявление для сервера
