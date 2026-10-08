@@ -1,0 +1,55 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "События блоков и защита спавна",
+  "summary": "Отменяем BlockBreakEvent и BlockPlaceEvent в безопасной зоне, оставляя операторам обход.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Спавн защищён, за пределами можно строить",
+      "stdin": "join Steve\nbreak Steve 0 64 0 STONE\nplace Steve 3 64 4 DIRT\nbreak Steve 6 64 0 STONE\nplace Steve 8 64 0 DIRT\n",
+      "expectedOutput": "[Steve] У спавна нельзя ломать блоки.\n[Steve] У спавна нельзя ставить блоки.\n",
+      "hidden": false
+    },
+    {
+      "name": "Оператор может строить у спавна",
+      "stdin": "join Alex\nop Alex\nbreak Alex 0 64 0 STONE\nplace Alex 1 64 1 STONE\n",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "name": "Граница радиуса",
+      "stdin": "join Steve\nbreak Steve 5 64 0 STONE\nbreak Steve 5 64 1 STONE\n",
+      "expectedOutput": "[Steve] У спавна нельзя ломать блоки.\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Зарегистрируйте GuardPlugin как Listener, затем добавьте методы с `@EventHandler` для обоих типов событий.",
+    "`event.getBlock().getLocation()` и `event.getBlockPlaced().getLocation()` дают координаты блока. Радиус 5 удобно проверить квадратом: `x*x + z*z <= 25`.",
+    "У обоих событий есть `setCancelled(true)`. Перед отменой проверьте `event.getPlayer().isOp()`: операторы должны обходить защиту."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "GuardPlugin",
+      "superclass": "JavaPlugin",
+      "message": "Защита должна быть частью главного класса плагина."
+    },
+    {
+      "type": "class",
+      "name": "GuardPlugin",
+      "interfaceName": "Listener",
+      "message": "Подпишитесь на события через Listener."
+    },
+    {
+      "type": "call",
+      "name": "setCancelled",
+      "message": "Запретите событие, отменяя его."
+    },
+    {
+      "type": "call",
+      "name": "isOp",
+      "message": "Оставьте операторам возможность обходить защиту."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Настройки из config.yml",
+  "summary": "Читаем строки и списки из YAML, подставляем имя игрока и используем значения по умолчанию.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Настройки по умолчанию",
+      "stdin": "join Steve\ncmd Steve info\n",
+      "expectedOutput": "[Byte] Добро пожаловать, Steve!\n[Byte] Paper + Bukkit\n[Byte] Настройте сообщения в config.yml\n",
+      "hidden": false
+    },
+    {
+      "name": "Пользовательский конфиг",
+      "stdin": "join Alex\ncmd Alex info\n",
+      "files": {
+        "config.yml": "prefix: '[Тест]'\nwelcome: 'Здравствуй, %player%!'\nmotd:\n  - 'Правило: уважайте игроков'\n  - 'Событие начнётся в 20:00'\n"
+      },
+      "expectedOutput": "[Тест] Здравствуй, Alex!\n[Тест] Правило: уважайте игроков\n[Тест] Событие начнётся в 20:00\n",
+      "hidden": true
+    },
+    {
+      "name": "Список MOTD может быть пустым",
+      "stdin": "join Notch\ncmd Notch info\n",
+      "files": {
+        "config.yml": "prefix: '[Server]'\nwelcome: 'Hi, %player%'\nmotd: []\n"
+      },
+      "expectedOutput": "[Server] Hi, Notch\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Добавьте config.yml в `resources/`, чтобы он попал внутрь JAR как значение по умолчанию. В `onEnable()` вызовите `saveDefaultConfig()`.",
+    "Строку читайте через `getConfig().getString(\"welcome\", \"...\")`, список строк — через `getStringList(\"motd\")`.",
+    "Сначала получите значение, затем подставьте игрока через `String.replace(\"%player%\", name)`. Для всех сообщений используйте общий префикс из конфига."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "ConfigPlugin",
+      "superclass": "JavaPlugin",
+      "message": "Используйте главный класс Bukkit-плагина."
+    },
+    {
+      "type": "call",
+      "name": "saveDefaultConfig",
+      "message": "Скопируйте встроенный config.yml при первом запуске."
+    },
+    {
+      "type": "call",
+      "name": "getString",
+      "message": "Читайте одиночные настройки через getString."
+    },
+    {
+      "type": "call",
+      "name": "getStringList",
+      "message": "Читайте список MOTD через getStringList."
+    }
+  ]
+}

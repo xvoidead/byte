@@ -11,6 +11,7 @@ import dev.byteide.runner.ProjectFile;
  *
  * @param starter  стартовый проект: {@code Main.java} или содержимое каталога {@code starter/}
  * @param solution эталонное решение: {@code solution.java} или содержимое каталога {@code solution/}
+ * @param activeFile файл проекта, который следует открыть в редакторе первым; null — Main.java
  * @param random   случайные скрытые тесты или null
  */
 public record Lesson(
@@ -26,6 +27,7 @@ public record Lesson(
         List<LessonTest> tests,
         List<String> hints,
         List<Requirement> requirements,
+        String activeFile,
         RandomTests random) {
 
     /** Случайные тесты: сколько добавлять к каждой проверке и шаблон ввода. */

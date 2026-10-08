@@ -1,0 +1,4 @@
+name: ByteSpawnGuard
+version: 1.0.0
+main: GuardPlugin
+api-version: '1.21'

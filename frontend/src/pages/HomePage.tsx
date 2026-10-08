@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { ConfigShowcase } from '../components/ConfigShowcase';
+import { MinecraftTracks } from '../components/MinecraftTracks';
 import { Reveal } from '../components/motion';
 import { ShowcaseDemo } from '../components/ShowcaseDemo';
 import { useAsync } from '../components/useAsync';
@@ -37,8 +38,8 @@ export function HomePage() {
           </span>
         </h1>
         <p className="hero-lead intro" style={delay(520)}>
-          Короткие уроки, настоящий компилятор и задания с мгновенной проверкой — от первой строки кода до проектов с
-          конфигами и JSON. Откройте урок и пишите код.
+          Короткие уроки, настоящий компилятор и задания с мгновенной проверкой — от первой строки кода до плагинов
+          Bukkit/Paper и модов Fabric для Minecraft. Откройте урок и пишите код.
         </p>
         <div className="hero-actions intro" style={delay(660)}>
           <Link className="btn btn-primary btn-lg" to={nextLesson ? `/lessons/${nextLesson.slug}` : '/lessons/hello-world'}>
@@ -109,11 +110,17 @@ export function HomePage() {
         </Reveal>
       </section>
 
+      <MinecraftTracks lessons={list} completed={done} />
+
       <section className="program">
         <Reveal className="section-head">
           <div>
             <h2 className="section-title">Программа курса</h2>
-            <p className="section-lead">37 уроков: от первой строки кода до Stream API, собственных проектов и работы с конфигами.</p>
+            <p className="section-lead">
+              {lessons.status === 'ready'
+                ? `${lessonCount(list.length)}: от первой строки кода до Stream API, проектов и Minecraft-модов.`
+                : 'От первой строки кода до Stream API, собственных проектов и модов для Minecraft.'}
+            </p>
           </div>
           {list.length > 0 && (
             <div className="progress" aria-label={`Пройдено ${completed} из ${list.length}`}>
@@ -187,6 +194,14 @@ function Feature({ icon, title, delay, children }: { icon: ReactNode; title: str
 
 function delay(ms: number): CSSProperties {
   return { '--intro-delay': `${ms}ms` } as CSSProperties;
+}
+
+function lessonCount(count: number): string {
+  const lastTwo = count % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return `${count} уроков`;
+  if (count % 10 === 1) return `${count} урок`;
+  if (count % 10 >= 2 && count % 10 <= 4) return `${count} урока`;
+  return `${count} уроков`;
 }
 
 function groupByModule(lessons: LessonSummary[]): [string, LessonSummary[]][] {

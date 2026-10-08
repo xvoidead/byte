@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Событие серверного тика",
+  "summary": "Используем ServerTickEvents.END_SERVER_TICK для периодических действий без блокировки сервера.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Сообщение раз в секунду",
+      "stdin": "join Steve\ntick 19\ntick 1\ntick 20\n",
+      "expectedOutput": "[Steve] Прошла секунда.\n[Steve] Прошла секунда.\n",
+      "hidden": false
+    },
+    {
+      "name": "До двадцатого тика сообщения нет",
+      "stdin": "join Alex\ntick 19\n",
+      "expectedOutput": "",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Зарегистрируйте `ServerTickEvents.END_SERVER_TICK` из `onInitialize`.",
+    "Храните счётчик тиков в поле объекта мода и увеличивайте его в каждом callback-е.",
+    "Каждые 20 тиков пройдите по `server.getPlayerManager().getPlayerList()` и отправьте `Text.literal(\"Прошла секунда.\")`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "TickMod",
+      "interfaceName": "ModInitializer",
+      "message": "Добавьте tick handler в общий Fabric entrypoint."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на END_SERVER_TICK."
+    },
+    {
+      "type": "call",
+      "name": "getPlayerList",
+      "message": "Рассылайте сообщение только игрокам онлайн."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Отправьте сообщение игроку через Minecraft API."
+    }
+  ]
+}

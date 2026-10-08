@@ -1,0 +1,7 @@
+name: ByteConfig
+version: 1.0.0
+main: ConfigPlugin
+api-version: '1.21'
+commands:
+  info:
+    description: Показать сообщение дня

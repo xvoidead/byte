@@ -1,0 +1,69 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Конфиг Fabric-мода",
+  "summary": "Читаем JSON-настройки из каталога Fabric Loader и используем приветствие и переключатель функции.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Настройки из JSON",
+      "stdin": "join Steve\n",
+      "files": {
+        "config/byte.json": "{\"enabled\":true,\"welcome\":\"С возвращением, {player}!\"}"
+      },
+      "expectedOutput": "[Steve] С возвращением, Steve!\n",
+      "hidden": false
+    },
+    {
+      "name": "Функцию можно выключить конфигом",
+      "stdin": "join Alex\n",
+      "files": {
+        "config/byte.json": "{\"enabled\":false,\"welcome\":\"Привет, {player}!\"}"
+      },
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "name": "При отсутствии файла создаются настройки по умолчанию",
+      "stdin": "",
+      "files": {},
+      "expectedOutput": null,
+      "expectedFiles": {
+        "config/byte.json": "{\"enabled\":true,\"welcome\":\"Добро пожаловать, {player}!\"}"
+      },
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Получите каталог через `FabricLoader.getInstance().getConfigDir()`, затем добавьте имя файла методом `resolve`.",
+    "Создайте каталог через `Files.createDirectories`, а если файла нет — запишите сериализованный `new ModConfig()`.",
+    "Gson читает объект вызовом `new Gson().fromJson(Files.readString(path), ModConfig.class)`. Проверяйте `enabled` до регистрации приветствия или внутри callback-а."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "WelcomeConfigMod",
+      "interfaceName": "ModInitializer",
+      "message": "Загружайте конфигурацию из общего entrypoint мода."
+    },
+    {
+      "type": "class",
+      "name": "ModConfig",
+      "message": "Опишите настройки отдельным классом."
+    },
+    {
+      "type": "call",
+      "name": "getConfigDir",
+      "message": "Используйте каталог конфигурации Fabric Loader."
+    },
+    {
+      "type": "call",
+      "name": "fromJson",
+      "message": "Разберите JSON через Gson."
+    },
+    {
+      "type": "call",
+      "name": "writeString",
+      "message": "Создайте файл настроек, если его ещё нет."
+    }
+  ]
+}

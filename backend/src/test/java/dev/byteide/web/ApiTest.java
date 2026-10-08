@@ -28,9 +28,21 @@ class ApiTest {
     void listsLessons() throws Exception {
         mvc.perform(get("/api/lessons"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(41)))
+                .andExpect(jsonPath("$", hasSize(53)))
                 .andExpect(jsonPath("$[0].slug").value("hello-world"))
+                .andExpect(jsonPath("$[41].slug").value("first-plugin"))
+                .andExpect(jsonPath("$[47].slug").value("fabric-first-mod"))
+                .andExpect(jsonPath("$[52].slug").value("fabric-client"))
                 .andExpect(jsonPath("$[0].theory").doesNotExist());
+    }
+
+    @Test
+    void keepsMainFileActiveForMinecraftLessons() throws Exception {
+        mvc.perform(get("/api/lessons/first-plugin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeFile").value("Main.java"));
+        mvc.perform(get("/api/lessons/fabric-client"))
+                .andExpect(jsonPath("$.activeFile").value("Main.java"));
     }
 
     @Test

@@ -5,15 +5,22 @@ test('главная показывает весь курс', async ({ page, bas
   const problems = watchProblems(page, baseURL);
   await page.goto('/');
   await expect(page.locator('h1')).toBeVisible();
-  await expect(page.locator('.lesson-row')).toHaveCount(41);
-  await expect(page.locator('.module')).toHaveCount(9);
+  await expect(page.locator('.lesson-row')).toHaveCount(53);
+  await expect(page.locator('.module')).toHaveCount(12);
   // Трек «Конфиги»: уроки трека и переключение файлов в витрине.
   await expect(page.locator('.track-lessons a')).toHaveCount(5);
+  // Отдельные карточки плагинов Bukkit/Paper и модов Fabric.
+  await expect(page.locator('.minecraft-track-card')).toHaveCount(2);
+  await expect(page.locator('.minecraft-track-lessons a')).toHaveCount(12);
   await page.getByRole('tab', { name: 'players.json' }).click();
   await expect(page.locator('.config-window .window-console')).toContainText('Боб: 110');
   await page.locator('.lesson-row').first().click();
   await expect(page).toHaveURL(/\/lessons\/hello-world/);
   await expect(page.locator('.stepper')).toBeVisible();
+  await page.goto('/lessons/first-plugin');
+  await expect(page.getByRole('tab', { name: 'Main.java' })).toHaveAttribute('aria-selected', 'true');
+  await page.goto('/lessons/fabric-client');
+  await expect(page.getByRole('tab', { name: 'Main.java' })).toHaveAttribute('aria-selected', 'true');
   expect(problems).toEqual([]);
 });
 

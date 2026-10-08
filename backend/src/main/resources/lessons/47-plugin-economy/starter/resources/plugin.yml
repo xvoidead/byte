@@ -1,0 +1,11 @@
+name: ByteEconomy
+version: 1.0.0
+main: EconomyPlugin
+api-version: '1.21'
+commands:
+  balance:
+    description: Показать баланс
+  pay:
+    description: Перевести монеты
+  baltop:
+    description: Таблица лидеров

@@ -18,6 +18,8 @@ export interface IdeProps {
   storageKey: string;
   /** Стартовый проект: один Main.java или несколько файлов. */
   initialFiles: ProjectFile[];
+  /** Какой исходник выбрать при первом открытии проекта. */
+  initialActiveFile?: string;
   /** Если задан, доступна кнопка «Проверить». */
   lessonSlug?: string;
   onPassed?: () => void;
@@ -37,17 +39,20 @@ type MonacoEditor = Parameters<OnMount>[0];
 const LIVE_DELAY_MS = 700;
 const MAX_LIVE_SOURCE = 50_000;
 
-function initialProject(files: ProjectFile[]): StoredProject {
+function initialProject(files: ProjectFile[], activeFile?: string): StoredProject {
   const sorted = sortFiles(files);
-  return { files: sorted, active: sorted.find((f) => isSource(f.name))?.name ?? sorted[0]?.name ?? MAIN_FILE };
+  const active = activeFile && sorted.some((f) => f.name === activeFile)
+    ? activeFile
+    : sorted.find((f) => isSource(f.name))?.name ?? sorted[0]?.name ?? MAIN_FILE;
+  return { files: sorted, active };
 }
 
 const sameFiles = (a: ProjectFile[], b: ProjectFile[]) =>
   a.length === b.length && a.every((f) => b.some((g) => g.name === f.name && g.content === f.content));
 
-export default function Ide({ storageKey, initialFiles, lessonSlug, onPassed, onChecked, onRun }: IdeProps) {
+export default function Ide({ storageKey, initialFiles, initialActiveFile, lessonSlug, onPassed, onChecked, onRun }: IdeProps) {
   const [project, setProjectState] = useState<StoredProject>(
-    () => loadProject(storageKey, initialFiles) ?? initialProject(initialFiles),
+    () => loadProject(storageKey, initialFiles) ?? initialProject(initialFiles, initialActiveFile),
   );
   const { files, active } = project;
   const activeFile = files.find((f) => f.name === active) ?? files[0];
@@ -384,7 +389,7 @@ export default function Ide({ storageKey, initialFiles, lessonSlug, onPassed, on
     // Модели удаляем, чтобы у файлов не осталась история правок и текст из черновика.
     const prefix = modelPath('');
     monaco.editor.getModels().forEach((m) => m.uri.toString().startsWith(prefix) && m.dispose());
-    setProjectState(initialProject(initialFiles));
+    setProjectState(initialProject(initialFiles, initialActiveFile));
     saveProject(storageKey, null);
     setTerminal(EMPTY_TERMINAL);
     setCheckResult(null);

@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Вход и выход игроков",
+  "summary": "Регистрируем ServerPlayConnectionEvents и отправляем игроку сообщения через Text.literal.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Вход и выход",
+      "stdin": "join Steve\njoin Alex\nquit Steve\n",
+      "expectedOutput": "[Steve] Привет, Steve!\n[Alex] Привет, Alex!\n[Steve] До встречи, Steve!\n",
+      "hidden": false
+    },
+    {
+      "name": "Выход неизвестного игрока ничего не ломает",
+      "stdin": "quit Herobrine\njoin Notch\n",
+      "expectedOutput": "[Notch] Привет, Notch!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Зарегистрируйте callback через `ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ...)`.",
+    "Игрок находится в `handler.player`. Имя — `handler.player.getName().getString()`.",
+    "Для выхода используйте `ServerPlayConnectionEvents.DISCONNECT`; его callback получает `handler` и `server`, но не `sender`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "PlayerEventsMod",
+      "interfaceName": "ModInitializer",
+      "message": "Регистрируйте серверные события из ModInitializer."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на JOIN и DISCONNECT."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Отправьте приветствие игроку при входе."
+    },
+    {
+      "type": "call",
+      "name": "getString",
+      "message": "Получите имя из Text через getString()."
+    }
+  ]
+}

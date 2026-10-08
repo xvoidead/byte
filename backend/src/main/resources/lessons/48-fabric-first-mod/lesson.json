@@ -1,0 +1,44 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Первый Fabric-мод",
+  "summary": "Entry point ModInitializer, файл fabric.mod.json и запуск кода при загрузке мода.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Мод инициализируется один раз",
+      "stdin": "",
+      "expectedOutput": "Мод Byte загружен!\n",
+      "hidden": false
+    },
+    {
+      "name": "Ввод сценария не перезапускает entrypoint",
+      "stdin": "join Steve\nquit Steve\n",
+      "expectedOutput": "Мод Byte загружен!\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Главный класс реализует `ModInitializer` из Fabric Loader.",
+    "Добавьте `@Override public void onInitialize()` и поместите туда код инициализации.",
+    "Укажите полное имя класса в `entrypoints.main` файла `fabric.mod.json`; сейчас класс находится в пакете по умолчанию."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "FirstMod",
+      "interfaceName": "ModInitializer",
+      "message": "Реализуйте Fabric entrypoint ModInitializer."
+    },
+    {
+      "type": "method",
+      "name": "onInitialize",
+      "returns": "void",
+      "message": "Добавьте метод onInitialize — точку запуска мода."
+    },
+    {
+      "type": "call",
+      "name": "println",
+      "message": "Выведите сообщение о загрузке мода."
+    }
+  ]
+}
