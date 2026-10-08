@@ -98,14 +98,14 @@ public class Sandbox {
                 "-XX:+DisableAttachMechanism",
                 "-Xshare:auto",
                 "-Djava.awt.headless=true",
-                "-Djava.io.tmpdir=" + workDir,
-                "-Dbyte.workdir=" + workDir,
-                "-Dbyte.classes=" + program.classesDir(),
+                "-Djava.io.tmpdir=" + toPolicyPath(workDir),
+                "-Dbyte.workdir=" + toPolicyPath(workDir),
+                "-Dbyte.classes=" + toPolicyPath(program.classesDir()),
                 "-Dfile.encoding=UTF-8",
                 "-Dstdout.encoding=UTF-8",
                 "-Dstderr.encoding=UTF-8",
                 "-Djava.security.manager=allow",
-                "-Djava.security.policy==" + policyFile,
+                "-Djava.security.policy==" + policyFile.toUri().toASCIIString(),
                 "--module-path", launcherDir.toString(),
                 "--add-modules", "java.se",
                 "-m", MODULE + "/" + SandboxLauncher.class.getName(),
@@ -165,7 +165,7 @@ public class Sandbox {
             "java.util.PropertyPermission \"net.bytebuddy.*\", \"read\"");
 
     private static String policy(Path launcherDir, StudentLibraries libraries) {
-        String codeBase = "file:" + launcherDir.toAbsolutePath() + "/";
+        String codeBase = toPolicyCodeBase(launcherDir);
         StringBuilder libraryGrants = new StringBuilder();
         for (Path path : libraries.jars()) {
             String name = path.getFileName().toString();
@@ -179,7 +179,7 @@ public class Sandbox {
         }
         return """
                 // Лаунчер песочницы: полные права.
-                grant codeBase "%s-" {
+                grant codeBase "%s" {
                     permission java.security.AllPermission;
                 };
 
@@ -253,11 +253,27 @@ public class Sandbox {
                     permission java.util.PropertyPermission "endive.*", "read";
                     permission java.util.PropertyPermission "run.endive.*", "read";
                 };
-                %s""".formatted(codeBase, libraries.root().toAbsolutePath(), libraryGrants);
+                %s""".formatted(codeBase, toPolicyPath(libraries.root()), libraryGrants);
+    }
+
+    private static String toPolicyCodeBase(Path path) {
+        String uri = path.toAbsolutePath().normalize().toUri().toASCIIString();
+        if (Files.isDirectory(path)) {
+            if (!uri.endsWith("/")) {
+                uri += "/";
+            }
+            return uri + "-";
+        }
+        return uri;
+    }
+
+    /** Policy uses URI-form code bases and slash-normalized paths in FilePermission entries. */
+    private static String toPolicyPath(Path path) {
+        return path.toAbsolutePath().normalize().toString().replace('\\', '/');
     }
 
     private static void grant(StringBuilder sb, Path path, List<String> permissions) {
-        String codeBase = "file:" + path.toAbsolutePath() + (Files.isDirectory(path) ? "/-" : "");
+        String codeBase = toPolicyCodeBase(path);
         sb.append("\ngrant codeBase \"").append(codeBase).append("\" {\n");
         for (String permission : permissions) {
             sb.append("    permission ").append(permission).append(";\n");
