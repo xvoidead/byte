@@ -1,0 +1,48 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Сколько игроков онлайн",
+  "summary": "После входа считаем список подключённых игроков и рассылаем актуальное число.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Объявление включает нового игрока",
+      "stdin": "join Steve\njoin Alex\n",
+      "expectedOutput": "[Steve] Сейчас онлайн: 1\n[Steve] Сейчас онлайн: 2\n[Alex] Сейчас онлайн: 2\n",
+      "hidden": false
+    },
+    {
+      "name": "После выхода новый подсчёт учитывает оставшихся",
+      "stdin": "join Steve\njoin Alex\nquit Steve\njoin Notch\n",
+      "expectedOutput": "[Steve] Сейчас онлайн: 1\n[Steve] Сейчас онлайн: 2\n[Alex] Сейчас онлайн: 2\n[Alex] Сейчас онлайн: 2\n[Notch] Сейчас онлайн: 2\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Зарегистрируйте `ServerPlayConnectionEvents.JOIN`.",
+    "Размер списка: `server.getPlayerManager().getPlayerList().size()`.",
+    "Создайте `Text.literal(\"Сейчас онлайн: \" + count)` и передайте в `broadcast`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "OnlineCountMod",
+      "interfaceName": "ModInitializer",
+      "message": "Добавьте поведение в ModInitializer."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на JOIN."
+    },
+    {
+      "type": "call",
+      "name": "getPlayerList",
+      "message": "Получите список игроков онлайн."
+    },
+    {
+      "type": "call",
+      "name": "broadcast",
+      "message": "Расскажите обновлённое число всем игрокам."
+    }
+  ]
+}

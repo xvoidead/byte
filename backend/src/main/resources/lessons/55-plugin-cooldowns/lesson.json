@@ -1,0 +1,49 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Защита команды от спама",
+  "summary": "Храним cooldown отдельно для каждого игрока и снимаем его отложенной задачей.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Cooldown истекает по тикам",
+      "stdin": "join Steve\ncmd Steve gift\ncmd Steve gift\nwait 4\ncmd Steve gift\nwait 1\ncmd Steve gift\n",
+      "expectedOutput": "[Steve] Подарок получен!\n[Steve] Подождите перед новым подарком.\n[Steve] Подождите перед новым подарком.\n[Steve] Подарок получен!\n",
+      "hidden": false
+    },
+    {
+      "name": "Игроки не блокируют друг друга",
+      "stdin": "join Steve\njoin Alex\ncmd Steve gift\ncmd Alex gift\ncmd Steve gift\n",
+      "expectedOutput": "[Steve] Подарок получен!\n[Alex] Подарок получен!\n[Steve] Подождите перед новым подарком.\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Получите ключ через `player.getUniqueId()` и используйте `Set<UUID>`.",
+    "Если `coolingDown.add(id)` вернул false, отправьте отказ и выйдите.",
+    "Удалите UUID из `BukkitRunnable.run()`, запущенного через `runTaskLater(this, 5L)`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "CooldownPlugin",
+      "superclass": "JavaPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Реализуйте обработчик команды."
+    },
+    {
+      "type": "call",
+      "name": "getUniqueId",
+      "message": "Храните cooldown для конкретного игрока."
+    },
+    {
+      "type": "call",
+      "name": "runTaskLater",
+      "message": "Снимите cooldown отложенной задачей."
+    },
+    {
+      "type": "call",
+      "name": "remove",
+      "message": "Освободите UUID после задержки."
+    }
+  ]
+}

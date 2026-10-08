@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,21 +29,31 @@ class ApiTest {
     void listsLessons() throws Exception {
         mvc.perform(get("/api/lessons"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(53)))
+                .andExpect(jsonPath("$", hasSize(65)))
                 .andExpect(jsonPath("$[0].slug").value("hello-world"))
                 .andExpect(jsonPath("$[41].slug").value("first-plugin"))
                 .andExpect(jsonPath("$[47].slug").value("fabric-first-mod"))
                 .andExpect(jsonPath("$[52].slug").value("fabric-client"))
+                .andExpect(jsonPath("$[53].slug").value("plugin-permissions"))
+                .andExpect(jsonPath("$[58].slug").value("plugin-block-quest"))
+                .andExpect(jsonPath("$[59].slug").value("fabric-first-join"))
+                .andExpect(jsonPath("$[64].slug").value("fabric-client-toggle"))
                 .andExpect(jsonPath("$[0].theory").doesNotExist());
     }
 
     @Test
     void keepsMainFileActiveForMinecraftLessons() throws Exception {
-        mvc.perform(get("/api/lessons/first-plugin"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.activeFile").value("Main.java"));
-        mvc.perform(get("/api/lessons/fabric-client"))
-                .andExpect(jsonPath("$.activeFile").value("Main.java"));
+        for (String slug : List.of(
+                "first-plugin", "plugin-commands", "plugin-events", "plugin-config", "plugin-scheduler",
+                "plugin-economy", "fabric-first-mod", "fabric-player-events", "fabric-ticks",
+                "fabric-block-events", "fabric-config", "fabric-client",
+                "plugin-permissions", "plugin-cooldowns", "plugin-material-filter", "plugin-break-stats",
+                "plugin-online-roster", "plugin-block-quest", "fabric-first-join", "fabric-online-count",
+                "fabric-tick-reminders", "fabric-block-filter", "fabric-block-rewards", "fabric-client-toggle")) {
+            mvc.perform(get("/api/lessons/" + slug))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.activeFile").value("Main.java"));
+        }
     }
 
     @Test

@@ -1,0 +1,4 @@
+name: ByteMaterialGuard
+version: 1.0.0
+main: MaterialGuardPlugin
+api-version: '1.21'

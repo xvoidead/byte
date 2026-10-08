@@ -402,6 +402,56 @@ const dumperOptions: Member[] = [
   m('setPrettyFlow', 'boolean pretty', 'void', 'Красивое оформление.'),
 ];
 
+const bukkitPlayer: Member[] = [
+  m('getName', '', 'String', 'Имя игрока.'),
+  m('getUniqueId', '', 'UUID', 'Стабильный UUID игрока; удобный ключ для Map и Set.'),
+  m('hasPermission', 'String permission', 'boolean', 'Проверяет именованное разрешение.'),
+  m('isOp', '', 'boolean', 'Проверяет, является ли игрок оператором.'),
+  m('sendMessage', 'String message', 'void', 'Показывает игроку сообщение.'),
+  m('getWorld', '', 'World', 'Мир, в котором находится игрок.'),
+];
+
+const commandSender: Member[] = [
+  m('getName', '', 'String', 'Имя отправителя команды.'),
+  m('hasPermission', 'String permission', 'boolean', 'Проверяет именованное разрешение.'),
+  m('isOp', '', 'boolean', 'Проверяет, является ли отправитель оператором.'),
+  m('sendMessage', 'String message', 'void', 'Отправляет сообщение отправителю команды.'),
+];
+
+const bukkitBlock: Member[] = [
+  m('getType', '', 'Material', 'Тип блока, например Material.STONE.'),
+  m('getLocation', '', 'Location', 'Координаты блока в мире.'),
+  m('getX', '', 'int', 'Координата блока по X.'),
+  m('getY', '', 'int', 'Координата блока по Y.'),
+  m('getZ', '', 'int', 'Координата блока по Z.'),
+];
+
+const fabricText: Member[] = [m('getString', '', 'String', 'Текстовое содержимое компонента.')];
+
+const fabricPlayer: Member[] = [
+  m('getName', '', 'Text', 'Отображаемое имя игрока как Text.'),
+  m('sendMessage', 'Text message, boolean overlay', 'void', 'Показывает игроку сообщение.'),
+];
+
+const fabricBlockState: Member[] = [
+  m('isOf', 'Block block', 'boolean', 'Проверяет тип блока, например state.isOf(Blocks.STONE).'),
+];
+
+const fabricPlayerManager: Member[] = [
+  m('getPlayerList', '', 'List<ServerPlayerEntity>', 'Список подключённых игроков.'),
+  m('getPlayer', 'String name', 'ServerPlayerEntity', 'Ищет подключённого игрока по имени.'),
+  m('broadcast', 'Text message, boolean overlay', 'void', 'Рассылает сообщение онлайн-игрокам.'),
+];
+
+const fabricServer: Member[] = [
+  m('getPlayerManager', '', 'PlayerManager', 'Менеджер подключённых игроков.'),
+  m('getOverworld', '', 'World', 'Основной мир сервера.'),
+];
+
+const keyBinding: Member[] = [
+  m('wasPressed', '', 'boolean', 'Извлекает одно накопленное нажатие клавиши.'),
+];
+
 /** Члены экземпляров по имени типа. */
 const INSTANCE: Record<string, Member[]> = {
   Path: path,
@@ -436,6 +486,16 @@ const INSTANCE: Record<string, Member[]> = {
   'Map.Entry': entry,
   Entry: entry,
   Iterator: iterator,
+  Player: bukkitPlayer,
+  CommandSender: commandSender,
+  Block: bukkitBlock,
+  BlockState: fabricBlockState,
+  PlayerEntity: fabricPlayer,
+  ServerPlayerEntity: fabricPlayer,
+  Text: fabricText,
+  PlayerManager: fabricPlayerManager,
+  MinecraftServer: fabricServer,
+  KeyBinding: keyBinding,
 };
 
 /** Статические члены по имени класса. */

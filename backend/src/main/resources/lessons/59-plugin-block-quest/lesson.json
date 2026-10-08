@@ -1,0 +1,55 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Мини-квест за камень",
+  "summary": "Соединяем событие добычи, Map прогресса и команду просмотра задания.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "Прогресс и завершение квеста",
+      "stdin": "join Steve\ncmd Steve quest\nbreak Steve 1 64 1 STONE\nbreak Steve 2 64 2 STONE\ncmd Steve quest\nbreak Steve 3 64 3 STONE\ncmd Steve quest\n",
+      "expectedOutput": "[Steve] Прогресс: 0/3\n[Steve] Прогресс: 2/3\n[Steve] Квест выполнен: 3/3\n[Steve] Прогресс: 3/3\n",
+      "hidden": false
+    },
+    {
+      "name": "Материалы и игроки разделены",
+      "stdin": "join Alex\nbreak Alex 1 64 1 DIRT\nbreak Alex 2 64 2 STONE\njoin Steve\ncmd Steve quest\ncmd Alex quest\n",
+      "expectedOutput": "[Steve] Прогресс: 0/3\n[Alex] Прогресс: 1/3\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Проверьте `event.getBlock().getType()` до изменения Map.",
+    "Сохраните результат `progress.merge(uuid, 1, Integer::sum)` в локальную переменную.",
+    "В команде получите Player и используйте `getOrDefault` с нулём."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "BlockQuestPlugin",
+      "superclass": "JavaPlugin",
+      "interfaceName": "Listener",
+      "message": "Обновляйте квест из события ломания."
+    },
+    {
+      "type": "class",
+      "name": "BlockQuestPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Добавьте команду просмотра прогресса."
+    },
+    {
+      "type": "call",
+      "name": "merge",
+      "message": "Увеличивайте личный прогресс через Map.merge."
+    },
+    {
+      "type": "call",
+      "name": "getOrDefault",
+      "message": "Новый игрок начинает с нуля."
+    },
+    {
+      "type": "call",
+      "name": "setExecutor",
+      "message": "Зарегистрируйте команду quest."
+    }
+  ]
+}

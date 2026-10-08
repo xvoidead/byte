@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "byte_fabric_client_toggle",
+  "version": "1.0.0",
+  "name": "Byte Переключатель подсказок на G",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "ClientToggleMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

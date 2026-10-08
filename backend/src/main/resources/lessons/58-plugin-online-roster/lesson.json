@@ -1,0 +1,55 @@
+{
+  "module": "Плагины Minecraft — Bukkit",
+  "title": "Список игроков онлайн",
+  "summary": "Поддерживаем актуальный Set UUID на входе и выходе и показываем его размер.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "После выхода счётчик уменьшается",
+      "stdin": "join Steve\njoin Alex\nquit Steve\ncmd Alex online\n",
+      "expectedOutput": "[Alex] Игроков онлайн: 1\n",
+      "hidden": false
+    },
+    {
+      "name": "Счёт меняется на входе и выходе",
+      "stdin": "join Steve\ncmd Steve online\njoin Alex\ncmd Alex online\nquit Steve\ncmd Alex online\n",
+      "expectedOutput": "[Steve] Игроков онлайн: 1\n[Alex] Игроков онлайн: 2\n[Alex] Игроков онлайн: 1\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Создайте поле `Set<UUID>`.",
+    "На входе добавьте UUID через `add`, на выходе удалите через `remove`.",
+    "Команда выводит `online.size()`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "OnlineRosterPlugin",
+      "superclass": "JavaPlugin",
+      "interfaceName": "Listener",
+      "message": "Обрабатывайте события входа и выхода."
+    },
+    {
+      "type": "class",
+      "name": "OnlineRosterPlugin",
+      "interfaceName": "CommandExecutor",
+      "message": "Подключите команду просмотра."
+    },
+    {
+      "type": "call",
+      "name": "registerEvents",
+      "message": "Зарегистрируйте listener."
+    },
+    {
+      "type": "call",
+      "name": "add",
+      "message": "Добавьте UUID при входе."
+    },
+    {
+      "type": "call",
+      "name": "remove",
+      "message": "Удалите UUID при выходе."
+    }
+  ]
+}

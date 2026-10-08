@@ -14,4 +14,8 @@ public final class BlockState {
     public String getBlockName() {
         return blockName;
     }
+
+    public boolean isOf(Block block) {
+        return block.matches(blockName);
+    }
 }

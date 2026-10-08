@@ -1,0 +1,7 @@
+name: ByteBlockQuest
+version: 1.0.0
+main: BlockQuestPlugin
+api-version: '1.21'
+commands:
+  quest:
+    description: Показать прогресс квеста

@@ -1,0 +1,1 @@
+После каждого подключения разошлите всем онлайн-игрокам строку `Сейчас онлайн: N`, включая только что вошедшего. Используйте `ServerPlayConnectionEvents.JOIN`, список `server.getPlayerManager().getPlayerList()` и `broadcast`.

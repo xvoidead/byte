@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "byte_fabric_first_join",
+  "version": "1.0.0",
+  "name": "Byte Первый вход и возвращение",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "FirstJoinMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

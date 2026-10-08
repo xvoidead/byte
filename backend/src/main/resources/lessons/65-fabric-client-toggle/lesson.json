@@ -1,0 +1,53 @@
+{
+  "module": "Моды Minecraft — Fabric",
+  "title": "Переключатель подсказок на G",
+  "summary": "Обрабатываем KeyBinding на клиентском тике и переключаем состояние подсказок.",
+  "activeFile": "Main.java",
+  "tests": [
+    {
+      "name": "G переключает состояние",
+      "stdin": "press G\ntick\npress G\ntick\n",
+      "expectedOutput": "[Steve] Подсказки выключены.\n[Steve] Подсказки включены.\n",
+      "hidden": false
+    },
+    {
+      "name": "F не меняет состояние, быстрые нажатия не теряются",
+      "stdin": "press F\ntick\npress G\npress G\ntick\n",
+      "expectedOutput": "[Steve] Подсказки выключены.\n[Steve] Подсказки включены.\n",
+      "hidden": true
+    }
+  ],
+  "hints": [
+    "Создайте boolean-поле с начальным значением true.",
+    "Зарегистрируйте биндинг с `InputUtil.Type.KEYSYM` и кодом 71.",
+    "В `END_CLIENT_TICK` используйте `while (toggle.wasPressed())`, меняйте флаг и проверяйте `client.player != null`."
+  ],
+  "requirements": [
+    {
+      "type": "class",
+      "name": "ClientToggleMod",
+      "interfaceName": "ClientModInitializer",
+      "message": "Реализуйте клиентский entrypoint."
+    },
+    {
+      "type": "call",
+      "name": "registerKeyBinding",
+      "message": "Добавьте клавишу G в настройки."
+    },
+    {
+      "type": "call",
+      "name": "register",
+      "message": "Подпишитесь на client tick."
+    },
+    {
+      "type": "call",
+      "name": "wasPressed",
+      "message": "Обработайте накопленные нажатия."
+    },
+    {
+      "type": "call",
+      "name": "sendMessage",
+      "message": "Покажите игроку новое состояние."
+    }
+  ]
+}

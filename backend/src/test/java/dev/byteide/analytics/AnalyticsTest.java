@@ -107,7 +107,7 @@ class AnalyticsTest {
                 .andExpect(jsonPath("$.totals.visitors30d").value(2))
                 .andExpect(jsonPath("$.totals.completions").value(1))
                 .andExpect(jsonPath("$.daily.length()").value(30))
-                .andExpect(jsonPath("$.lessons.length()").value(53))
+                .andExpect(jsonPath("$.lessons.length()").value(65))
                 .andExpect(jsonPath("$.lessons[?(@.slug == 'input')].opened").value(2))
                 .andExpect(jsonPath("$.lessons[?(@.slug == 'input')].started").value(1))
                 .andExpect(jsonPath("$.lessons[?(@.slug == 'input')].completed").value(1))
